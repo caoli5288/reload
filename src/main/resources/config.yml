@@ -1,0 +1,10 @@
+control:
+  load: 0.9
+  flow: 20000
+wait: 15
+force: false
+kick:
+  to: ''
+message:
+  notify: ''
+debug: false
