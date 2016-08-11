@@ -64,16 +64,16 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     private void process() {
-        long currentLoad = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        load = Math.max(load, Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-        if (debug) {
-            getPlugin().getLogger().info("DEBUG (" + load / 1048576 + "M, " + flow + ')');
-        }
-
-        if ((load = Math.max(load, currentLoad)) > loadLimit && flow > flowLimit) {
-            getPlugin().getLogger().info("Scheduled shutdown! (" + load / 1048576 + "M, " + flow + ')');
+        if ((load > loadLimit) && (flow > flowLimit)) {
+            getPlugin().getLogger().info("Scheduled shutdown! (" + (load / 1048576) + "M, " + flow + ')');
             processWait = true;
             wait = getPlugin().getConfig().getInt("wait");
+        }
+
+        if (debug) {
+            getPlugin().getLogger().info("DEBUG! (" + (load / 1048576) + "M, " + flow + ')');
         }
     }
 
