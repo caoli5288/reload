@@ -51,8 +51,10 @@ public class Executor extends Messenger implements Listener, Runnable {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void handle(ServerListPingEvent event) {
-        event.setMaxPlayers(event.getNumPlayers());
-        event.setMotd(ChatColor.DARK_RED + "重启中");
+        if (shutdown) {
+            event.setMaxPlayers(event.getNumPlayers());
+            event.setMotd(ChatColor.DARK_RED + "重启中");
+        }
     }
 
     @Override
