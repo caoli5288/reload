@@ -1,6 +1,7 @@
 package com.mengcraft.reload;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import static org.bukkit.util.NumberConversions.toLong;
 
@@ -23,6 +24,11 @@ public class Main extends JavaPlugin {
         int flow = getConfig().getInt("control.flow");
         if (flow > 0) {
             executor.setFlowLimit(flow);
+        }
+
+        int time = getConfig().getInt("time");
+        if (time > 0) {
+            executor.setTime(System.currentTimeMillis() + time * 3600000L);
         }
 
         if (executor.hasFunction()) {

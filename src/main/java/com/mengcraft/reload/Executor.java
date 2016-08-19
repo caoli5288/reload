@@ -24,6 +24,7 @@ public class Executor extends Messenger implements Listener, Runnable {
     private boolean shutdown;
     private int wait;
 
+    private long time;
     private long load;
     private long loadLimit;
 
@@ -66,7 +67,7 @@ public class Executor extends Messenger implements Listener, Runnable {
     private void process() {
         load = Math.max(load, Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-        if ((load > loadLimit) && (flow > flowLimit)) {
+        if ((load > loadLimit) && (flow > flowLimit) && (System.currentTimeMillis() > time)) {
             getPlugin().getLogger().info("Scheduled shutdown! (" + (load / 1048576) + "M, " + flow + ')');
             processWait = true;
             wait = getPlugin().getConfig().getInt("wait");
@@ -120,7 +121,11 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     public boolean hasFunction() {
-        return loadLimit != 0 || flowLimit != 0;
+        return loadLimit != 0 || flowLimit != 0 || time != 0;
+    }
+
+    public void setTime(long time) {
+        this.time = time;
     }
 
     public void setLoadLimit(long loadLimit) {
