@@ -1,3 +1,8 @@
 name: Reload
 main: com.mengcraft.reload.Main
 version: ${project.version}
+
+commands:
+  load:
+    description: None
+    permission: reload.admin

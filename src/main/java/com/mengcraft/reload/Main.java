@@ -1,7 +1,6 @@
 package com.mengcraft.reload;
 
 import org.bukkit.plugin.java.JavaPlugin;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import static org.bukkit.util.NumberConversions.toLong;
 
@@ -28,7 +27,7 @@ public class Main extends JavaPlugin {
 
         int time = getConfig().getInt("time");
         if (time > 0) {
-            executor.setTime(System.currentTimeMillis() + time * 3600000L);
+            executor.setTimeTarget(System.currentTimeMillis() + time * 3600000L);
         }
 
         if (executor.hasFunction()) {
@@ -38,6 +37,7 @@ public class Main extends JavaPlugin {
                 executor.setKickTo(to);
             }
             executor.setDebug(getConfig().getBoolean("debug"));
+            getCommand("load").setExecutor(executor);
             getServer().getPluginManager().registerEvents(executor, this);
             getServer().getScheduler().runTaskTimer(this, executor, 100, 100);
         } else {

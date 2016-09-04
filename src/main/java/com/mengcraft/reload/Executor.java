@@ -3,20 +3,23 @@ package com.mengcraft.reload;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent.Result;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.plugin.Plugin;
 
 /**
  * Created on 16-8-7.
  */
-public class Executor extends Messenger implements Listener, Runnable {
+public class Executor extends Messenger implements Listener, Runnable, CommandExecutor {
 
     private String kickTo;
 
@@ -24,7 +27,8 @@ public class Executor extends Messenger implements Listener, Runnable {
     private boolean shutdown;
     private int wait;
 
-    private long time;
+    private long timeStart = System.currentTimeMillis();
+    private long timeTarget;
     private long load;
     private long loadLimit;
 
@@ -38,7 +42,7 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     @EventHandler
-    public void handle(PlayerJoinEvent event) {
+    public void handle(PlayerQuitEvent event) {
         flow++;
     }
 
@@ -66,10 +70,19 @@ public class Executor extends Messenger implements Listener, Runnable {
         }
     }
 
+    @Override
+    public boolean onCommand(CommandSender p, Command i, String j, String[] k) {
+        p.sendMessage("Flow " + flow + '/' + flowLimit +
+                ", memory " + (load / 1048576) + '/' + (loadLimit / 1048576) +
+                ", running " + ((System.currentTimeMillis() - timeStart) / 60000) + " minute"
+        );
+        return true;
+    }
+
     private void process() {
         load = Math.max(load, Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-        if ((load > loadLimit) && (flow > flowLimit) && (System.currentTimeMillis() > time)) {
+        if ((load > loadLimit) && (flow > flowLimit) && (System.currentTimeMillis() > timeTarget)) {
             getPlugin().getLogger().info("Scheduled shutdown! (" + (load / 1048576) + "M, " + flow + ')');
             processWait = true;
             wait = getPlugin().getConfig().getInt("wait");
@@ -123,11 +136,11 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     public boolean hasFunction() {
-        return loadLimit != 0 || flowLimit != 0 || time != 0;
+        return loadLimit != 0 || flowLimit != 0 || timeTarget != 0;
     }
 
-    public void setTime(long time) {
-        this.time = time;
+    public void setTimeTarget(long timeTarget) {
+        this.timeTarget = timeTarget;
     }
 
     public void setLoadLimit(long loadLimit) {
