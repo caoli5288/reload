@@ -2,7 +2,6 @@ package com.mengcraft.reload;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +13,10 @@ public class Messenger {
 
     private final static ArrayList<String> EMPTY_LIST = new ArrayList<>();
     private final static String PREFIX = "message.";
-    private final Plugin plugin;
+    private final Main main;
 
-    public Messenger(Plugin plugin) {
-        this.plugin = plugin;
+    public Messenger(Main main) {
+        this.main = main;
     }
 
     public void send(CommandSender p, String path) {
@@ -47,22 +46,22 @@ public class Messenger {
     }
 
     public List<String> findList(String path, List<String> def) {
-        List<String> found = plugin.getConfig().getStringList(with(path));
+        List<String> found = main.getConfig().getStringList(with(path));
         if (found.isEmpty()) {
             if (!def.isEmpty()) {
-                plugin.getConfig().set(with(path), found = def);
-                plugin.saveConfig();
+                main.getConfig().set(with(path), found = def);
+                main.saveConfig();
             }
         }
         return found;
     }
 
     public String find(String path, String def) {
-        String found = plugin.getConfig().getString(with(path), "");
+        String found = main.getConfig().getString(with(path), "");
         if (found.isEmpty()) {
             if (!def.isEmpty()) {
-                plugin.getConfig().set(with(path), found = def);
-                plugin.saveConfig();
+                main.getConfig().set(with(path), found = def);
+                main.saveConfig();
             }
         }
         return found;
@@ -76,8 +75,8 @@ public class Messenger {
         return PREFIX + str;
     }
 
-    public Plugin getPlugin() {
-        return plugin;
+    public Main getMain() {
+        return main;
     }
 
 }

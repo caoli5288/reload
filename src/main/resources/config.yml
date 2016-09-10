@@ -1,7 +1,5 @@
 control:
-  flow: 3500
-  load: 0.9
-  time: 12
+  expr: '(runtime > 36000 && online < 1) || tps < 5'
 wait: 15
 force: false
 kick:
