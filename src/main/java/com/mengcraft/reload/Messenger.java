@@ -13,7 +13,7 @@ public class Messenger {
 
     private final static ArrayList<String> EMPTY_LIST = new ArrayList<>();
     private final static String PREFIX = "message.";
-    private final Main main;
+    protected final Main main;
 
     public Messenger(Main main) {
         this.main = main;
@@ -73,10 +73,6 @@ public class Messenger {
 
     private String with(String str) {
         return PREFIX + str;
-    }
-
-    public Main getMain() {
-        return main;
     }
 
 }

@@ -74,16 +74,16 @@ public class Executor extends Messenger implements Listener, Runnable {
 
     private void process() {
         engine.put("time", Main.unixTime() - startedTime);
-        engine.put("online", getMain().getServer().getOnlinePlayers().size());
+        engine.put("online", main.getServer().getOnlinePlayers().size());
         engine.put("flow", flow);
         engine.put("tps", ticker.get());
         engine.put("memory", calcMemory());
 
         try {
             if ((boolean) Invocable.class.cast(engine).invokeFunction("check")) {
-                getMain().getLogger().info("Scheduled shutdown!");
+                main.getLogger().info("Scheduled shutdown");
                 processWait = true;
-                wait = getMain().getConfig().getInt("wait");
+                wait = main.getConfig().getInt("wait");
             }
         } catch (ScriptException | NoSuchMethodException ignore) {
         }
@@ -93,11 +93,8 @@ public class Executor extends Messenger implements Listener, Runnable {
     public static float calcMemory() {
         Runtime runtime = Runtime.getRuntime();
         long max = runtime.maxMemory();
-        System.out.println(max);
         long free = runtime.freeMemory();
-        System.out.println(free);
         long allocated = runtime.totalMemory();
-        System.out.println(allocated);
         return new BigDecimal(allocated - free).divide(new BigDecimal(max), 2, RoundingMode.HALF_UP).floatValue();
     }
 
@@ -109,7 +106,7 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     private void processNotify() {
-        for (Player p : getMain().getServer().getOnlinePlayers()) {
+        for (Player p : main.getServer().getOnlinePlayers()) {
             send(p, "notify");
         }
     }
@@ -122,13 +119,7 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     private void processShutdown() {
-        getMain().getServer().getScheduler().runTaskLater(getMain(), () -> {
-            if (getMain().getConfig().getBoolean("force")) {
-                System.exit(0);
-            } else {
-                getMain().getServer().shutdown();
-            }
-        }, 20);
+        main.getServer().getScheduler().runTaskLater(main, main::shutdown, 20);
         shutdown = true;
     }
 
@@ -138,8 +129,8 @@ public class Executor extends Messenger implements Listener, Runnable {
         buf.writeUTF(nextKickTo());
         byte[] data = buf.toByteArray();
 
-        for (Player p : getMain().getServer().getOnlinePlayers()) {
-            p.sendPluginMessage(getMain(), "BungeeCord", data);
+        for (Player p : main.getServer().getOnlinePlayers()) {
+            p.sendPluginMessage(main, "BungeeCord", data);
         }
     }
 
