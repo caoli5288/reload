@@ -73,6 +73,13 @@ public class Main extends JavaPlugin {
                 System.exit(1);
             }
         } else {
+            Timer t = new Timer("shutdown watchdog");
+            t.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    shutdown(true);
+                }
+            }, TimeUnit.MINUTES.toMillis(2));
             getServer().shutdown();
         }
     }
