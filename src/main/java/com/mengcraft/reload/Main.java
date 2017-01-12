@@ -32,7 +32,7 @@ public class Main extends JavaPlugin {
         } catch (ScriptException ignore) {
         }
 
-        Ticker ticker = new Ticker();
+        Ticker ticker = new Ticker(this);
         Executor executor = new Executor(this, engine, ticker);
 
         List<String> to = getConfig().getStringList("kick.to");
@@ -55,8 +55,8 @@ public class Main extends JavaPlugin {
             }
         }, 0, TimeUnit.MINUTES.toMillis(1)));
 
-        getServer().getScheduler().runTaskTimer(this, ticker, 10, 10);
-        getServer().getScheduler().runTaskTimer(this, executor, 200, 200);
+        getServer().getScheduler().runTaskTimer(this, ticker, 0, 10);
+        getServer().getScheduler().runTaskTimer(this, executor, 0, 200);
     }
 
     public void shutdown(boolean force) {
@@ -84,6 +84,10 @@ public class Main extends JavaPlugin {
         }
     }
 
+    public void log(String line) {
+
+    }
+
     public void shutdown() {
         shutdown(false);
     }
@@ -98,5 +102,4 @@ public class Main extends JavaPlugin {
     public static int unixTime() {
         return (int) System.currentTimeMillis() / 1000;
     }
-
 }
