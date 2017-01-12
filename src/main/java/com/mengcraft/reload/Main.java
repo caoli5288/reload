@@ -8,8 +8,7 @@ import javax.script.ScriptException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -18,7 +17,7 @@ import java.util.logging.Level;
  */
 public class Main extends JavaPlugin {
 
-    private Timer daemon;
+    private ScheduledThreadPoolExecutor pool;
 
     @Override
     public void onEnable() {
@@ -38,24 +37,21 @@ public class Main extends JavaPlugin {
         List<String> to = getConfig().getStringList("kick.to");
         if (!to.isEmpty()) {
             getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-            executor.setKickTo(to);
+            executor.setKick(to);
         }
 
         getServer().getPluginManager().registerEvents(executor, this);
 
-        daemon = new Timer("reload daemon", true);
-
-        getServer().getScheduler().runTask(this, () -> daemon.schedule(new TimerTask() {
-            public void run() {
-                ticker.update();
-                if (ticker.get() < 1) {
-                    getLogger().log(Level.SEVERE, "TPS < 1, killing...");
-                    shutdown(true);
-                }
+        pool = new ScheduledThreadPoolExecutor(1);
+        pool.scheduleAtFixedRate(() -> {
+            ticker.update();
+            if (ticker.get() < 1) {
+                getLogger().log(Level.SEVERE, "TPS < 1, killing...");
+                shutdown(true);
             }
-        }, 0, TimeUnit.MINUTES.toMillis(1)));
+        }, 30, 60, TimeUnit.SECONDS);
 
-        getServer().getScheduler().runTaskTimer(this, ticker, 0, 10);
+        getServer().getScheduler().runTaskTimer(this, ticker, 0, 20);
         getServer().getScheduler().runTaskTimer(this, executor, 0, 200);
     }
 
@@ -67,25 +63,20 @@ public class Main extends JavaPlugin {
                 ProcessBuilder b = new ProcessBuilder("kill", "-9", pid);
                 try {
                     b.start();
-                } catch (IOException e) {
+                } catch (IOException ignore) {
                 }
             } else {
                 System.exit(1);
             }
         } else {
-            Timer t = new Timer("shutdown watchdog");
-            t.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    shutdown(true);
-                }
-            }, TimeUnit.MINUTES.toMillis(2));
+            ScheduledThreadPoolExecutor i = new ScheduledThreadPoolExecutor(1);
+            i.schedule(() -> shutdown(true), 2, TimeUnit.MINUTES);
             getServer().shutdown();
         }
     }
 
     public void log(String line) {
-
+        getLogger().info(line);
     }
 
     public void shutdown() {
@@ -94,12 +85,21 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (daemon != null) {
-            daemon.cancel();
+        if (pool != null) {
+            pool.shutdownNow();
         }
     }
 
     public static int unixTime() {
-        return (int) System.currentTimeMillis() / 1000;
+        return Math.toIntExact(System.currentTimeMillis() / 1000);
     }
+
+    public void process(Runnable r, int delay, int i) {
+        getServer().getScheduler().runTaskTimer(this, r, delay, i);
+    }
+
+    public void process(Runnable r, int delay) {
+        getServer().getScheduler().runTaskLater(this, r, delay);
+    }
+
 }

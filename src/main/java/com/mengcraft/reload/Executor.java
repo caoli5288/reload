@@ -26,21 +26,17 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Executor extends Messenger implements Listener, Runnable {
 
     private final Ticker ticker;
-    private final ScriptEngine engine;
-    private final int startedTime;
-
-    private List<String> kickTo;
-    private boolean processWait;
+    private final ScriptEngine script;
+    private final int s;
+    private List<String> kick;
+    private int flow;
     private boolean shutdown;
 
-    private int wait;
-    private int flow;
-
-    public Executor(Main main, ScriptEngine engine, Ticker ticker) {
+    public Executor(Main main, ScriptEngine script, Ticker ticker) {
         super(main);
-        this.engine = engine;
+        this.script = script;
         this.ticker = ticker;
-        startedTime = Main.unixTime();
+        s = Main.unixTime();
     }
 
     @EventHandler
@@ -50,14 +46,14 @@ public class Executor extends Messenger implements Listener, Runnable {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void handle(PlayerLoginEvent event) {
-        if (processWait) {
+        if (shutdown) {
             event.setResult(Result.KICK_FULL);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void handle(ServerListPingEvent event) {
-        if (processWait || shutdown) {
+        if (shutdown) {
             event.setMaxPlayers(event.getNumPlayers());
             event.setMotd(ChatColor.DARK_RED + "重启中");
         }
@@ -65,32 +61,33 @@ public class Executor extends Messenger implements Listener, Runnable {
 
     @Override
     public void run() {
-        if (processWait) {
-            processTimeWait();
-        } else {
+        if (!shutdown) {
             process();
         }
     }
 
     private void process() {
-        engine.put("time", Main.unixTime() - startedTime);
-        engine.put("online", main.getServer().getOnlinePlayers().size());
-        engine.put("flow", flow);
-        engine.put("tps", ticker.get());
-        engine.put("memory", calcMemory());
+        script.put("time", Main.unixTime() - s);
+        script.put("online", main.getServer().getOnlinePlayers().size());
+        script.put("flow", flow);
+        script.put("tps", ticker.get());
+        script.put("memory", calc());
 
         try {
-            if ((boolean) Invocable.class.cast(engine).invokeFunction("check")) {
+            if ((boolean) Invocable.class.cast(script).invokeFunction("check")) {
                 main.getLogger().info("Scheduled shutdown");
-                processWait = true;
-                wait = main.getConfig().getInt("wait");
+                shutdown = true;
+                int i = main.getConfig().getInt("wait") * 20;
+                main.process(this::note, 0, 100);
+                main.process(this::kick, i - 5);
+                main.process(main::shutdown, i);
             }
         } catch (ScriptException | NoSuchMethodException ignore) {
         }
 
     }
 
-    public static float calcMemory() {
+    public static float calc() {
         Runtime runtime = Runtime.getRuntime();
         long max = runtime.maxMemory();
         long free = runtime.freeMemory();
@@ -98,32 +95,13 @@ public class Executor extends Messenger implements Listener, Runnable {
         return new BigDecimal(allocated - free).divide(new BigDecimal(max), 2, RoundingMode.HALF_UP).floatValue();
     }
 
-    private void processTimeWait() {
-        if (!shutdown && (wait = wait - 5) < 0) {
-            processEnd();
-        }
-        processNotify();
-    }
-
-    private void processNotify() {
+    private void note() {
         for (Player p : main.getServer().getOnlinePlayers()) {
             send(p, "notify");
         }
     }
 
-    private void processEnd() {
-        if (kickTo != null) {
-            processKick();
-        }
-        processShutdown();
-    }
-
-    private void processShutdown() {
-        main.getServer().getScheduler().runTaskLater(main, main::shutdown, 20);
-        shutdown = true;
-    }
-
-    private void processKick() {
+    private void kick() {
         ByteArrayDataOutput buf = ByteStreams.newDataOutput();
         buf.writeUTF("Connect");
         buf.writeUTF(nextKickTo());
@@ -135,12 +113,12 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     private String nextKickTo() {
-        int i = ThreadLocalRandom.current().nextInt(kickTo.size());
-        return kickTo.get(i);
+        int i = ThreadLocalRandom.current().nextInt(kick.size());
+        return kick.get(i);
     }
 
-    public void setKickTo(List<String> kickTo) {
-        this.kickTo = kickTo;
+    public void setKick(List<String> kick) {
+        this.kick = kick;
     }
 
 }

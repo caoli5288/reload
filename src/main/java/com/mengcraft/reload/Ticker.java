@@ -2,16 +2,17 @@ package com.mengcraft.reload;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created on 16-9-10.
  */
 public class Ticker implements Runnable {
 
-    private final boolean debug;
+    private final AtomicInteger tick = new AtomicInteger();
     private final Main main;
+    private final boolean debug;
     private float result = 20;
-    private int tick;
     private int latest;
     private int t;
 
@@ -22,19 +23,22 @@ public class Ticker implements Runnable {
 
     @Override
     public void run() {
-        tick += 10;
+        tick.addAndGet(20);
     }
 
     public void update() {
-        int time = Main.unixTime();
-        if (latest > 0) {
-            result = new BigDecimal(tick - t).divide(new BigDecimal(time - latest), 2, RoundingMode.HALF_UP).floatValue();
-            if (debug) {
-                main.log("New TPS value " + result);
+        int i = tick.get();
+        if (i > 0) {
+            int time = Main.unixTime();
+            if (latest > 0) {
+                result = new BigDecimal(i - t).divide(new BigDecimal(time - latest), 2, RoundingMode.HALF_UP).floatValue();
+                if (debug) {
+                    main.log("New TPS value " + result);
+                }
             }
+            t = i;
+            latest = time;
         }
-        t = tick;
-        latest = time;
     }
 
     public float get() {
