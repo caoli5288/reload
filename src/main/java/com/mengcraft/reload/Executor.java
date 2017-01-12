@@ -17,29 +17,30 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created on 16-8-7.
  */
 public class Executor extends Messenger implements Listener, Runnable {
 
-    private final TickPerSecond ticker;
+    private final Ticker ticker;
     private final ScriptEngine engine;
-    private final int time;
+    private final int startedTime;
 
-    private String kickTo;
-
+    private List<String> kickTo;
     private boolean processWait;
     private boolean shutdown;
 
     private int wait;
     private int flow;
 
-    public Executor(Main main, ScriptEngine engine, TickPerSecond ticker) {
+    public Executor(Main main, ScriptEngine engine, Ticker ticker) {
         super(main);
         this.engine = engine;
         this.ticker = ticker;
-        time = Main.unixTime();
+        startedTime = Main.unixTime();
     }
 
     @EventHandler
@@ -56,7 +57,7 @@ public class Executor extends Messenger implements Listener, Runnable {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void handle(ServerListPingEvent event) {
-        if (shutdown) {
+        if (processWait || shutdown) {
             event.setMaxPlayers(event.getNumPlayers());
             event.setMotd(ChatColor.DARK_RED + "重启中");
         }
@@ -72,11 +73,11 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     private void process() {
-        engine.put("runtime", Main.unixTime() - time);
+        engine.put("time", Main.unixTime() - startedTime);
         engine.put("online", getMain().getServer().getOnlinePlayers().size());
         engine.put("flow", flow);
-        engine.put("load", calcLoad());
         engine.put("tps", ticker.get());
+        engine.put("memory", calcMemory());
 
         try {
             if ((boolean) Invocable.class.cast(engine).invokeFunction("check")) {
@@ -89,11 +90,15 @@ public class Executor extends Messenger implements Listener, Runnable {
 
     }
 
-    private float calcLoad() {
+    public static float calcMemory() {
         Runtime runtime = Runtime.getRuntime();
-        return new BigDecimal(runtime.totalMemory() - runtime.freeMemory()
-        ).divide(new BigDecimal(runtime.maxMemory()), 2, RoundingMode.HALF_UP
-        ).floatValue();
+        long max = runtime.maxMemory();
+        System.out.println(max);
+        long free = runtime.freeMemory();
+        System.out.println(free);
+        long allocated = runtime.totalMemory();
+        System.out.println(allocated);
+        return new BigDecimal(allocated - free).divide(new BigDecimal(max), 2, RoundingMode.HALF_UP).floatValue();
     }
 
     private void processTimeWait() {
@@ -130,7 +135,7 @@ public class Executor extends Messenger implements Listener, Runnable {
     private void processKick() {
         ByteArrayDataOutput buf = ByteStreams.newDataOutput();
         buf.writeUTF("Connect");
-        buf.writeUTF(kickTo);
+        buf.writeUTF(nextKickTo());
         byte[] data = buf.toByteArray();
 
         for (Player p : getMain().getServer().getOnlinePlayers()) {
@@ -138,7 +143,12 @@ public class Executor extends Messenger implements Listener, Runnable {
         }
     }
 
-    public void setKickTo(String kickTo) {
+    private String nextKickTo() {
+        int i = ThreadLocalRandom.current().nextInt(kickTo.size());
+        return kickTo.get(i);
+    }
+
+    public void setKickTo(List<String> kickTo) {
         this.kickTo = kickTo;
     }
 
