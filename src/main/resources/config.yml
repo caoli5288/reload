@@ -4,6 +4,7 @@
 # tps -> 服务器运行状况
 # memory -> 服务器内存使用，取值0-1.0
 control:
+  # 设为false禁用此功能，true视为使用默认表达式
   expr: '(time > 36000 && online < 1) || tps < 5'
 wait: 15
 force: false

@@ -23,24 +23,40 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
-        try {
-            engine.eval("function check() {\n" +
-                    "    return " + getConfig().getString("control.expr") + ";\n" +
-                    "}");
-        } catch (ScriptException ignore) {
+        String path = "control.expr";
+        String expr;
+
+        if (getConfig().isBoolean(path)) {
+            if (getConfig().getBoolean(path)) {
+                expr = "(time > 36000 && online < 1) || tps < 5";
+            } else {
+                expr = null;
+            }
+        } else {
+            expr = getConfig().getString(path);
         }
 
         Ticker ticker = new Ticker(this);
-        Executor executor = new Executor(this, engine, ticker);
 
-        List<String> to = getConfig().getStringList("kick.to");
-        if (!to.isEmpty()) {
-            getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-            executor.setKick(to);
+        if (!nil(expr)) {
+            ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
+            try {
+                engine.eval("function check() {\n" +
+                        "    return " + expr + ";\n" +
+                        "}");
+            } catch (ScriptException ignore) {
+            }
+
+            Executor executor = new Executor(this, engine, ticker);
+            List<String> to = getConfig().getStringList("kick.to");
+            if (!to.isEmpty()) {
+                getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+                executor.setKick(to);
+            }
+
+            getServer().getPluginManager().registerEvents(executor, this);
+            getServer().getScheduler().runTaskTimer(this, executor, 0, 200);
         }
-
-        getServer().getPluginManager().registerEvents(executor, this);
 
         pool = new ScheduledThreadPoolExecutor(1);
         pool.scheduleAtFixedRate(() -> {
@@ -52,7 +68,7 @@ public class Main extends JavaPlugin {
         }, 30, 60, TimeUnit.SECONDS);
 
         getServer().getScheduler().runTaskTimer(this, ticker, 0, 20);
-        getServer().getScheduler().runTaskTimer(this, executor, 0, 200);
+
     }
 
     public void shutdown(boolean force) {
@@ -88,6 +104,10 @@ public class Main extends JavaPlugin {
         if (pool != null) {
             pool.shutdownNow();
         }
+    }
+
+    public static boolean nil(Object i) {
+        return i == null;
     }
 
     public static int unixTime() {
