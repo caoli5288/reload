@@ -70,7 +70,7 @@ public class Executor extends Messenger implements Listener, Runnable {
         script.put("time", Main.unixTime() - s);
         script.put("online", main.getServer().getOnlinePlayers().size());
         script.put("flow", flow);
-        script.put("tps", ticker.get());
+        script.put("tps", ticker.get1());
         script.put("memory", calc());
 
         try {

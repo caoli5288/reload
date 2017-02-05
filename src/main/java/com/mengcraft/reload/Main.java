@@ -1,5 +1,7 @@
 package com.mengcraft.reload;
 
+import org.bukkit.command.CommandMap;
+import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.script.ScriptEngine;
@@ -7,6 +9,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +64,7 @@ public class Main extends JavaPlugin {
         pool = new ScheduledThreadPoolExecutor(1);
         pool.scheduleAtFixedRate(() -> {
             ticker.update();
-            if (ticker.get() < 1) {
+            if (ticker.get1() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
@@ -69,6 +72,14 @@ public class Main extends JavaPlugin {
 
         getServer().getScheduler().runTaskTimer(this, ticker, 0, 20);
 
+        try {
+            Field f = SimplePluginManager.class.getDeclaredField("commandMap");
+            f.setAccessible(true);
+            CommandMap map = (CommandMap) f.get(getServer().getPluginManager());
+            map.register("uptime", new Uptime(ticker));
+        } catch (ReflectiveOperationException e) {
+            e.printStackTrace();
+        }
     }
 
     public void shutdown(boolean force) {

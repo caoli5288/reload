@@ -1,48 +1,62 @@
 package com.mengcraft.reload;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Created on 16-9-10.
  */
 public class Ticker implements Runnable {
 
-    private final AtomicInteger tick = new AtomicInteger();
     private final Main main;
-    private final boolean debug;
-    private float result = 20;
-    private int latest;
-    private int t;
+    private final TBox t1;
+    private final TBox t2;
+    private final TBox t3;
+
+    private int i;
+    private boolean debug;
+
 
     public Ticker(Main main) {
         this.main = main;
         debug = main.getConfig().getBoolean("debug");
+        t1 = new TBox("short", 60);
+        t2 = new TBox("medium", 300);
+        t3 = new TBox("long", 900);
     }
 
     @Override
     public void run() {
-        tick.addAndGet(20);
+        i = i + 20;
     }
 
     public void update() {
-        int i = tick.get();
         if (i > 0) {
-            int time = Main.unixTime();
-            if (latest > 0) {
-                result = new BigDecimal(i - t).divide(new BigDecimal(time - latest), 2, RoundingMode.HALF_UP).floatValue();
-                if (debug) {
-                    main.log("New TPS value " + result);
-                }
+            int now = Main.unixTime();
+            t1.update(now, i);
+            t2.update(now, i);
+            t3.update(now, i);
+            if (debug) {
+                main.log("Server current tick " + i + ", latest 15m's TPS " + t1.get() + ", " + t2.get() + ", " + t3.get());
             }
-            t = i;
-            latest = time;
         }
     }
 
-    public float get() {
-        return result;
+    public int i() {
+        return i;
+    }
+
+    public float get1() {
+        return t1.get();
+    }
+
+    public float get2() {
+        return t2.get();
+    }
+
+    public float get3() {
+        return t3.get();
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
 }
