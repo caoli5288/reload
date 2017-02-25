@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -20,7 +21,8 @@ import java.util.logging.Level;
  */
 public class Main extends JavaPlugin {
 
-    private ScheduledThreadPoolExecutor pool;
+    private ScheduledExecutorService watchdog; // GC safe
+    private ScheduledExecutorService pool;
 
     @Override
     public void onEnable() {
@@ -64,7 +66,7 @@ public class Main extends JavaPlugin {
         pool = new ScheduledThreadPoolExecutor(1);
         pool.scheduleAtFixedRate(() -> {
             ticker.update();
-            if (ticker.get1() < 1) {
+            if (ticker.getShort() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
@@ -96,8 +98,8 @@ public class Main extends JavaPlugin {
                 System.exit(1);
             }
         } else {
-            ScheduledThreadPoolExecutor i = new ScheduledThreadPoolExecutor(1);
-            i.schedule(() -> shutdown(true), 2, TimeUnit.MINUTES);
+            watchdog = new ScheduledThreadPoolExecutor(1);
+            watchdog.schedule(() -> shutdown(true), 1, TimeUnit.MINUTES);
             getServer().shutdown();
         }
     }
@@ -121,15 +123,15 @@ public class Main extends JavaPlugin {
         return i == null;
     }
 
-    public static int unixTime() {
+    public static int now() {
         return Math.toIntExact(System.currentTimeMillis() / 1000);
     }
 
-    public void process(Runnable r, int delay, int i) {
+    public void run(Runnable r, int delay, int i) {
         getServer().getScheduler().runTaskTimer(this, r, delay, i);
     }
 
-    public void process(Runnable r, int delay) {
+    public void run(Runnable r, int delay) {
         getServer().getScheduler().runTaskLater(this, r, delay);
     }
 

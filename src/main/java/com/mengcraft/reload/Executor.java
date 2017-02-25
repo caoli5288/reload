@@ -36,7 +36,7 @@ public class Executor extends Messenger implements Listener, Runnable {
         super(main);
         this.script = script;
         this.ticker = ticker;
-        s = Main.unixTime();
+        s = Main.now();
     }
 
     @EventHandler
@@ -67,10 +67,10 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     private void process() {
-        script.put("time", Main.unixTime() - s);
+        script.put("time", Main.now() - s);
         script.put("online", main.getServer().getOnlinePlayers().size());
         script.put("flow", flow);
-        script.put("tps", ticker.get1());
+        script.put("tps", ticker.getShort());
         script.put("memory", calc());
 
         try {
@@ -78,9 +78,9 @@ public class Executor extends Messenger implements Listener, Runnable {
                 main.getLogger().info("Scheduled shutdown");
                 shutdown = true;
                 int i = main.getConfig().getInt("wait") * 20;
-                main.process(this::note, 0, 100);
-                main.process(this::kick, i - 5);
-                main.process(main::shutdown, i);
+                main.run(this::note, 0, 100);
+                main.run(this::kick, i - 5);
+                main.run(main::shutdown, i);
             }
         } catch (ScriptException | NoSuchMethodException ignore) {
         }

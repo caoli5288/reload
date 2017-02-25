@@ -5,58 +5,55 @@ package com.mengcraft.reload;
  */
 public class Ticker implements Runnable {
 
-    private final Main main;
-    private final TBox t1;
-    private final TBox t2;
-    private final TBox t3;
+    private final TBox bshort;
+    private final TBox bmed;
+    private final TBox blong;
 
-    private int i;
+    private final Main main;
+
+    private int tick;
     private boolean debug;
 
 
     public Ticker(Main main) {
         this.main = main;
         debug = main.getConfig().getBoolean("debug");
-        t1 = new TBox("short", 60);
-        t2 = new TBox("medium", 300);
-        t3 = new TBox("long", 900);
+        bshort = new TBox("short", 60);
+        bmed = new TBox("medium", 300);
+        blong = new TBox("long", 900);
     }
 
     @Override
     public void run() {
-        i = i + 20;
+        tick = tick + 20;
     }
 
     public void update() {
-        if (i > 0) {
-            int now = Main.unixTime();
-            t1.update(now, i);
-            t2.update(now, i);
-            t3.update(now, i);
+        if (tick > 0) {
+            int now = Main.now();
+            bshort.update(now, tick);
+            bmed.update(now, tick);
+            blong.update(now, tick);
             if (debug) {
-                main.log("Server current tick " + i + ", latest 15m's TPS " + t1.get() + ", " + t2.get() + ", " + t3.get());
+                main.log("Server current tick " + tick + ", latest 15m's TPS " + bshort.get() + ", " + bmed.get() + ", " + blong.get());
             }
         }
     }
 
-    public int i() {
-        return i;
+    public int tick() {
+        return tick;
     }
 
-    public float get1() {
-        return t1.get();
+    public float getShort() {
+        return bshort.get();
     }
 
-    public float get2() {
-        return t2.get();
+    public float getMed() {
+        return bmed.get();
     }
 
-    public float get3() {
-        return t3.get();
-    }
-
-    public void setDebug(boolean debug) {
-        this.debug = debug;
+    public float getLong() {
+        return blong.get();
     }
 
 }
