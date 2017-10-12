@@ -1,13 +1,11 @@
 # Reload
-## Expression
-在配置文件`control.expr`路径填入你的表达式，或者布尔值。`true`代表使用默认的`(time > 36000 && online < 1) || tps < 5`表达式，而`false`则代表禁用此功能。
+A Bukkit plugin that customize server's restart behavior.
 
-### Variable
-
+## Variable
 | variable | description |
 |----------|-------------|
-| time     | Server run time by second.   |
-| online   | Current onlin -player count. |
-| flow     | Count total player joined.   |
-| memory   | Ratio of memory usage(0-1).  |
-| tps      | Latest 1 minute tps(0-20).   |
+| time     | Server run time by second   |
+| online   | Current onlin -player count |
+| flow     | Count total player joined   |
+| memory   | Ratio of memory usage(0-1)  |
+| tps      | Latest 1 minute tps(0-20)   |

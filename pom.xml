@@ -14,7 +14,7 @@
     <repositories>
         <repository>
             <id>repo-spigot</id>
-            <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
+            <url>http://ci.mengcraft.com:8080/plugin/repository/everything/</url>
         </repository>
     </repositories>
 
@@ -23,6 +23,13 @@
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
             <version>1.8.8-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.18</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -31,13 +38,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources/</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-    </build>
 </project>

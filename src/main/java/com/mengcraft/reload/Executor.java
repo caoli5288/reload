@@ -12,11 +12,6 @@ import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -25,23 +20,21 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class Executor extends Messenger implements Listener, Runnable {
 
-    private final Ticker ticker;
-    private final ScriptEngine script;
-    private final int s;
+    private final Main main;
+    private final Machine machine;
+
     private List<String> kick;
-    private int flow;
     private boolean shutdown;
 
-    public Executor(Main main, ScriptEngine script, Ticker ticker) {
+    public Executor(Main main, Machine machine) {
         super(main);
-        this.script = script;
-        this.ticker = ticker;
-        s = Main.now();
+        this.main = main;
+        this.machine = machine;
     }
 
     @EventHandler
     public void handle(PlayerQuitEvent event) {
-        flow++;
+        machine.incFlow();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -67,32 +60,16 @@ public class Executor extends Messenger implements Listener, Runnable {
     }
 
     private void process() {
-        script.put("time", Main.now() - s);
-        script.put("online", main.getServer().getOnlinePlayers().size());
-        script.put("flow", flow);
-        script.put("tps", ticker.getShort());
-        script.put("memory", calc());
-
-        try {
-            if ((boolean) Invocable.class.cast(script).invokeFunction("check")) {
-                main.getLogger().info("Scheduled shutdown");
-                shutdown = true;
-                int i = main.getConfig().getInt("wait") * 20;
-                main.run(this::note, 0, 100);
-                main.run(this::kick, i - 5);
-                main.run(main::shutdown, i);
-            }
-        } catch (ScriptException | NoSuchMethodException ignore) {
+        if (machine.process()) {
+            main.getLogger().info("Express " + machine.getExpr() + " matched, " +
+                    "scheduling shutdown...");
+            shutdown = true;
+            int i = main.getConfig().getInt("wait") * 20;
+            main.run(this::note, 0, 100);
+            main.run(this::kick, i - 5);
+            main.run(main::shutdown, i);
         }
 
-    }
-
-    public static float calc() {
-        Runtime runtime = Runtime.getRuntime();
-        long max = runtime.maxMemory();
-        long free = runtime.freeMemory();
-        long allocated = runtime.totalMemory();
-        return new BigDecimal(allocated - free).divide(new BigDecimal(max), 2, RoundingMode.HALF_UP).floatValue();
     }
 
     private void note() {

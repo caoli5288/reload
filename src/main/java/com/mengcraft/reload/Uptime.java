@@ -15,35 +15,35 @@ public class Uptime extends Command {
     private static final long HOUR = 3600000;
     private static final long MIN = 60000;
 
-    private final Ticker ticker;
     private final String date;
     private final long up;
 
-    public Uptime(Ticker ticker) {
+    Uptime() {
         super("uptime");
-        this.ticker = ticker;
+        setPermission("uptime.use");
         up = System.currentTimeMillis();
         date = LocalDate.now().toString();
     }
 
     @Override
     public boolean execute(CommandSender sender, String label, String[] i) {
-        if (sender.hasPermission("uptime.use")) {
+        if (testPermission(sender)) {
+            Ticker ticker = Ticker.INST;
             sender.sendMessage(date + " up " + time() + ", " + ticker.tick() + " tick(s); " +
-                    "Load avg: " + t(ticker.getShort()) + ", " + t(ticker.getMed()) +
-                    ", " + t(ticker.getLong()));
+                    "Load avg: " + colour(ticker.getShort()) + ", " + colour(ticker.getMed()) +
+                    ", " + colour(ticker.getLong()));
             return true;
         }
         return false;
     }
 
-    private String t(float t) {
-        if (t > 18) return l(t, 'a');
-        if (t > 12) return l(t, 'e');
-        return l(t, ChatColor.RED.getChar());
+    private String colour(float num) {
+        if (num > 18) return colour(num, 'a');
+        if (num > 12) return colour(num, 'e');
+        return colour(num, ChatColor.RED.getChar());
     }
 
-    private String l(Object i, char l) {
+    private String colour(Object i, char l) {
         return "§" + l + i + "§r";
     }
 

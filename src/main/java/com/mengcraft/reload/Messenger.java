@@ -1,9 +1,11 @@
 package com.mengcraft.reload;
 
+import lombok.val;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -11,68 +13,72 @@ import java.util.List;
  */
 public class Messenger {
 
-    private final static ArrayList<String> EMPTY_LIST = new ArrayList<>();
     private final static String PREFIX = "message.";
-    protected final Main main;
+    private final Plugin plugin;
 
-    public Messenger(Main main) {
-        this.main = main;
+    public Messenger(Plugin plugin) {
+        this.plugin = plugin;
     }
 
-    public void send(CommandSender p, String path) {
-        send(p, path, "");
+    private String path(String path) {
+        return PREFIX + path;
     }
 
-    public void send(CommandSender p, String path, String def) {
-        sendMessage(p, find(path, def));
-    }
-
-    public void sendList(CommandSender p, String path, List<String> def) {
-        for (String line : findList(path, def)) {
-            sendMessage(p, line);
+    private String multi(Object found) {
+        val input = (List) found;
+        val b = new StringBuilder();
+        int size = input.size();
+        for (int l = 0; l < size; l++) {
+            if (l > 0) {
+                b.append('\n');
+            }
+            b.append(input.get(l));
         }
+        return b.toString();
     }
 
-    public void sendList(CommandSender p, String path) {
-        sendList(p, path, EMPTY_LIST);
+    public String find(String path, String input) {
+        val found = plugin.getConfig().get(path(path), null);
+        if (found == null) {
+            if (input == null || input.isEmpty()) return path;
+            if (input.indexOf('\n') == -1) {
+                plugin.getConfig().set(path(path), input);
+                plugin.saveConfig();
+            } else {
+                plugin.getConfig().set(path(path), Arrays.asList(input.split("\n")));
+                plugin.saveConfig();
+            }
+            return input;
+        } else if (found instanceof List) {
+            return multi(found);
+        }
+        return found.toString();
     }
 
     public String find(String path) {
         return find(path, "");
     }
 
-    public List<String> findList(String path) {
-        return findList(path, EMPTY_LIST);
+    public void sendLine(CommandSender receive, String line) {
+        receive.sendMessage(ChatColor.translateAlternateColorCodes('&', line));
     }
 
-    public List<String> findList(String path, List<String> def) {
-        List<String> found = main.getConfig().getStringList(with(path));
-        if (found.isEmpty()) {
-            if (!def.isEmpty()) {
-                main.getConfig().set(with(path), found = def);
-                main.saveConfig();
+    public void sendMessage(CommandSender receive, String message) {
+        if (message.indexOf('\n') == -1) {
+            sendLine(receive, message);
+        } else {
+            for (String line : message.split("\n")) {
+                sendLine(receive, line);
             }
         }
-        return found;
     }
 
-    public String find(String path, String def) {
-        String found = main.getConfig().getString(with(path), "");
-        if (found.isEmpty()) {
-            if (!def.isEmpty()) {
-                main.getConfig().set(with(path), found = def);
-                main.saveConfig();
-            }
-        }
-        return found;
+    public void send(CommandSender receive, String path, String input) {
+        sendMessage(receive, find(path, input));
     }
 
-    public void sendMessage(CommandSender p, String text) {
-        p.sendMessage(ChatColor.translateAlternateColorCodes('&', text));
-    }
-
-    private String with(String str) {
-        return PREFIX + str;
+    public void send(CommandSender receive, String path) {
+        send(receive, path, "");
     }
 
 }

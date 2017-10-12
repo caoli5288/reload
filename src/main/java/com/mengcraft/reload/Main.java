@@ -4,9 +4,6 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -28,31 +25,11 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
-        String path = "control.expr";
-        String expr;
+        String expr = getConfig().getString("control.expr");
 
-        if (getConfig().isBoolean(path)) {
-            if (getConfig().getBoolean(path)) {
-                expr = "(time > 36000 && online < 1) || tps < 5";
-            } else {
-                expr = null;
-            }
-        } else {
-            expr = getConfig().getString(path);
-        }
+        if (!(nil(expr) || expr.isEmpty())) {
+            Executor executor = new Executor(this, Machine.build(expr));
 
-        Ticker ticker = new Ticker(this);
-
-        if (!nil(expr)) {
-            ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
-            try {
-                engine.eval("function check() {\n" +
-                        "    return " + expr + ";\n" +
-                        "}");
-            } catch (ScriptException ignore) {
-            }
-
-            Executor executor = new Executor(this, engine, ticker);
             List<String> to = getConfig().getStringList("kick.to");
             if (!to.isEmpty()) {
                 getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
@@ -65,20 +42,20 @@ public class Main extends JavaPlugin {
 
         pool = new ScheduledThreadPoolExecutor(1);
         pool.scheduleAtFixedRate(() -> {
-            ticker.update();
-            if (ticker.getShort() < 1) {
+            Ticker.INST.update();
+            if (Ticker.INST.getShort() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
         }, 30, 60, TimeUnit.SECONDS);
 
-        getServer().getScheduler().runTaskTimer(this, ticker, 0, 20);
+        getServer().getScheduler().runTaskTimer(this, Ticker.INST, 0, 20);
 
         try {
             Field f = SimplePluginManager.class.getDeclaredField("commandMap");
             f.setAccessible(true);
             CommandMap map = (CommandMap) f.get(getServer().getPluginManager());
-            map.register("uptime", new Uptime(ticker));
+            map.register("uptime", new Uptime());
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();
         }
@@ -99,7 +76,7 @@ public class Main extends JavaPlugin {
             }
         } else {
             watchdog = new ScheduledThreadPoolExecutor(1);
-            watchdog.schedule(() -> shutdown(true), 1, TimeUnit.MINUTES);
+            watchdog.schedule(() -> shutdown(true), 2, TimeUnit.MINUTES);
             getServer().shutdown();
         }
     }
@@ -121,10 +98,6 @@ public class Main extends JavaPlugin {
 
     public static boolean nil(Object i) {
         return i == null;
-    }
-
-    public static int now() {
-        return Math.toIntExact(System.currentTimeMillis() / 1000);
     }
 
     public void run(Runnable r, int delay, int i) {

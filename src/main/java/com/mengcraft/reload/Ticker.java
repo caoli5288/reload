@@ -3,25 +3,15 @@ package com.mengcraft.reload;
 /**
  * Created on 16-9-10.
  */
-public class Ticker implements Runnable {
+public enum Ticker implements Runnable {
 
-    private final TBox bshort;
-    private final TBox bmed;
-    private final TBox blong;
+    INST;
 
-    private final Main main;
+    private final TBox x = new TBox("short", 60);
+    private final TBox y = new TBox("medium", 300);
+    private final TBox z = new TBox("long", 900);
 
     private int tick;
-    private boolean debug;
-
-
-    public Ticker(Main main) {
-        this.main = main;
-        debug = main.getConfig().getBoolean("debug");
-        bshort = new TBox("short", 60);
-        bmed = new TBox("medium", 300);
-        blong = new TBox("long", 900);
-    }
 
     @Override
     public void run() {
@@ -30,13 +20,10 @@ public class Ticker implements Runnable {
 
     public void update() {
         if (tick > 0) {
-            int now = Main.now();
-            bshort.update(now, tick);
-            bmed.update(now, tick);
-            blong.update(now, tick);
-            if (debug) {
-                main.log("Server current tick " + tick + ", latest 15m's TPS " + bshort.get() + ", " + bmed.get() + ", " + blong.get());
-            }
+            int now = ((int) (System.currentTimeMillis() / 1000));
+            x.update(now, tick);
+            y.update(now, tick);
+            z.update(now, tick);
         }
     }
 
@@ -45,15 +32,15 @@ public class Ticker implements Runnable {
     }
 
     public float getShort() {
-        return bshort.get();
+        return x.getValue();
     }
 
     public float getMed() {
-        return bmed.get();
+        return y.getValue();
     }
 
     public float getLong() {
-        return blong.get();
+        return z.getValue();
     }
 
 }
