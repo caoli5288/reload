@@ -10,7 +10,7 @@ wait: 15
 force: false
 kick:
   to:
-  - 'Lobby'
+  - 'lobby-1'
 message:
   notify: '&1为了服务器流畅，本大厅即将重启！请玩家前往其他大厅或等待自动传送至主大厅！'
 debug: false

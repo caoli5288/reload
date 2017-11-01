@@ -27,10 +27,13 @@ public class Machine {
     enum Token {
 
         FLOW(machine -> "" + machine.flow),
+        JOIN(machine -> "" + machine.join),
+        LOGIN(machine -> "" + machine.login),
         MEMORY(machine -> "" + machine.memory()),
         ONLINE(machine -> "" + Bukkit.getOnlinePlayers().size()),
         TIME(machine -> "" + ((System.currentTimeMillis() - machine.now) / 1000)),
-        TPS(machine -> "" + Ticker.INST.getShort());
+        TPS(machine -> "" + Ticker.INST.getShort()),
+        ;
 
         final Function<Machine, String> func;
         final String key;
@@ -39,23 +42,34 @@ public class Machine {
             key = "${" + name().toLowerCase() + "}";
             this.func = func;
         }
+
     }
 
     final ScriptEngine engine;
     final String expr;
-    final List<Token> tl;
+    final List<Token> list;
     final long now = System.currentTimeMillis();
 
     @Setter(value = AccessLevel.NONE)
     int flow;
+    private int join;
+    private int login;
 
     public void incFlow() {
         ++flow;
     }
 
+    public void incLogin() {
+        ++login;
+    }
+
+    public void incJoin() {
+        ++join;
+    }
+
     @SneakyThrows
     public boolean process() {
-        return ((boolean) engine.eval(express(expr, tl.iterator())));
+        return ((boolean) engine.eval(express(expr, list.iterator())));
     }
 
     String express(String expr, Iterator<Token> itr) {

@@ -28,7 +28,7 @@ public class Main extends JavaPlugin {
         String expr = getConfig().getString("control.expr");
 
         if (!(nil(expr) || expr.isEmpty())) {
-            Executor executor = new Executor(this, Machine.build(expr));
+            MainListener executor = new MainListener(this, Machine.build(expr));
 
             List<String> to = getConfig().getStringList("kick.to");
             if (!to.isEmpty()) {
@@ -47,7 +47,7 @@ public class Main extends JavaPlugin {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
-        }, 30, 60, TimeUnit.SECONDS);
+        }, 30, 30, TimeUnit.SECONDS);
 
         getServer().getScheduler().runTaskTimer(this, Ticker.INST, 0, 20);
 
@@ -79,10 +79,6 @@ public class Main extends JavaPlugin {
             watchdog.schedule(() -> shutdown(true), 2, TimeUnit.MINUTES);
             getServer().shutdown();
         }
-    }
-
-    public void log(String line) {
-        getLogger().info(line);
     }
 
     public void shutdown() {

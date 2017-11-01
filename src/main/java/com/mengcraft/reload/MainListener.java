@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -18,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Created on 16-8-7.
  */
-public class Executor extends Messenger implements Listener, Runnable {
+public class MainListener extends Messenger implements Listener, Runnable {
 
     private final Main main;
     private final Machine machine;
@@ -26,7 +27,7 @@ public class Executor extends Messenger implements Listener, Runnable {
     private List<String> kick;
     private boolean shutdown;
 
-    public Executor(Main main, Machine machine) {
+    public MainListener(Main main, Machine machine) {
         super(main);
         this.main = main;
         this.machine = machine;
@@ -37,10 +38,17 @@ public class Executor extends Messenger implements Listener, Runnable {
         machine.incFlow();
     }
 
+    @EventHandler
+    public void handle(PlayerJoinEvent event) {
+        machine.incJoin();
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void handle(PlayerLoginEvent event) {
         if (shutdown) {
             event.setResult(Result.KICK_FULL);
+        } else {
+            machine.incLogin();
         }
     }
 
