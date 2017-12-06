@@ -4,10 +4,12 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 ## Variable
 | variable | description |
 |----------|-------------|
-| time     | Server run time by second   |
-| online   | Current onlin -player count |
-| flow     | Count total player joined   |
+| flow     | Count player join and quit  |
+| join     | Count player joined         |
+| login    | Count player try login      |
 | memory   | Ratio of memory usage(0-1)  |
+| online   | Current online-player count |
+| time     | Server run time by second   |
 | tps      | Latest 1 minute tps(0-20)   |
 
 ## Command

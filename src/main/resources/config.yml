@@ -11,7 +11,7 @@ force: false
 force_wait: 120
 kick:
   to:
-  - 'Lobby'
+  - 'lobby-1'
 schedule:
 - "at 12:30 say 大家中午好"
 - "every 18:00 say 大家下午好"
