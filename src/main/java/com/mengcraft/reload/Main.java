@@ -91,16 +91,16 @@ public class Main extends JavaPlugin {
         String expr = getConfig().getString("control.expr");
 
         if (!(expr == null || expr.isEmpty())) {
-            Executor executor = new Executor(this, Machine.build(expr));
+            MainListener l = new MainListener(this, Machine.build(expr));
 
-            List<String> to = getConfig().getStringList("kick.to");
-            if (!to.isEmpty()) {
+            List<String> kickTo = getConfig().getStringList("kick_to");
+            if (!kickTo.isEmpty()) {
                 getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-                executor.setKick(to);
+                l.setKick(kickTo);
             }
 
-            getServer().getPluginManager().registerEvents(executor, this);
-            getServer().getScheduler().runTaskTimer(this, executor, 0, 200);
+            getServer().getPluginManager().registerEvents(l, this);
+            getServer().getScheduler().runTaskTimer(this, l, 0, 200);
         }
 
         pool = new ScheduledThreadPoolExecutor(1);
@@ -110,7 +110,7 @@ public class Main extends JavaPlugin {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
-        }, 30, 60, TimeUnit.SECONDS);
+        }, 30, 30, TimeUnit.SECONDS);
 
         getServer().getScheduler().runTaskTimer(this, Ticker.INST, 0, 20);
 
@@ -170,18 +170,9 @@ public class Main extends JavaPlugin {
         }
     }
 
-    String processId() {
-        String bean = ManagementFactory.getRuntimeMXBean().getName();
-        return bean.substring(0, bean.indexOf('@'));
-    }
-
     @Override
     public void onDisable() {
         if (!(pool == null)) pool.shutdown();
-    }
-
-    public void log(String line) {
-        getLogger().info(line);
     }
 
     public void shutdown() {
