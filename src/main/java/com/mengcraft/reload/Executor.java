@@ -65,7 +65,7 @@ public class Executor extends Messenger implements Listener, Runnable {
                     "scheduling shutdown...");
             shutdown = true;
             int i = main.getConfig().getInt("wait") * 20;
-            main.run(this::note, 0, 100);
+            main.run(this::note, 0, 55);
             main.run(this::kick, i - 5);
             main.run(main::shutdown, i);
         }
