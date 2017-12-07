@@ -4,32 +4,34 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Created on 17-2-5.
  */
 public class Uptime extends Command {
 
-    private static final long DAY = 86400000;
-    private static final long HOUR = 3600000;
-    private static final long MIN = 60000;
+    private static final long MIN = 60;
+    private static final long H = 3600;
+    private static final long DAY = 86400;
 
-    private final String date;
-    private final long up;
+    private String colour(Object i, char l) {
+        return "§" + l + i + "§r";
+    }
+
+    private final LocalDateTime up = LocalDateTime.now();
 
     Uptime() {
         super("uptime");
         setPermission("uptime.use");
-        up = System.currentTimeMillis();
-        date = LocalDate.now().toString();
     }
 
     @Override
     public boolean execute(CommandSender sender, String label, String[] i) {
         if (testPermission(sender)) {
             Ticker ticker = Ticker.INST;
-            sender.sendMessage(date + " up " + time() + ", " + ticker.tick() + " tick(s); " +
+            sender.sendMessage(up.toLocalDate() + " up " + time() + ", " + ticker.tick() + " tick(s); " +
                     "Load avg: " + colour(ticker.getShort()) + ", " + colour(ticker.getMed()) +
                     ", " + colour(ticker.getLong()));
             return true;
@@ -39,26 +41,21 @@ public class Uptime extends Command {
 
     private String colour(float num) {
         if (num > 18) return colour(num, 'a');
-        if (num > 12) return colour(num, 'e');
+        if (num > 14) return colour(num, 'e');
         return colour(num, ChatColor.RED.getChar());
     }
 
-    private String colour(Object i, char l) {
-        return "§" + l + i + "§r";
-    }
-
     private String time() {
-        long l = System.currentTimeMillis() - up;
+        long l = ChronoUnit.SECONDS.between(up, LocalDateTime.now());
         if (l > DAY) {
             return (l / DAY) + " day(s), " + hour(l);
-        } else if (l > HOUR) {
+        } else if (l > H) {
             return hour(l);
         }
         return (l / MIN) + " min(s)";
     }
 
     private String hour(long l) {
-        return ((l % DAY) / HOUR) + ":" + ((l % HOUR) / MIN);
+        return ((l % DAY) / H) + ":" + ((l % H) / MIN);
     }
-
 }
