@@ -96,16 +96,20 @@ public class Main extends JavaPlugin {
         });
     }
 
-    static Runner toRunner(List<String> input, boolean ext) {
+    void at(CommandSender who, List<String> input) {
         val itr = input.iterator();
-        LocalDateTime next = toDateTime(itr.next(), ext);
+        val label = itr.next();
         if (!itr.hasNext()) {
             throw new IllegalArgumentException("no command");
         }
-        return new Runner(next, join(itr, ' '));
+
+        val runner = new Runner(toTimeAt(label), -1, join(itr, ' '));
+        pool.schedule(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.MILLISECONDS);
+
+        who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " at " + runner.nextTime);
     }
 
-    static LocalDateTime toDateTime(String input, boolean ext) {
+    static LocalDateTime toTimeAt(String input) {
         try {
             LocalTime clock = LocalTime.parse(input);
             if (clock.isAfter(LocalTime.now())) {
@@ -115,10 +119,6 @@ public class Main extends JavaPlugin {
             return LocalDateTime.of(LocalDate.now().plusDays(1), clock);
         } catch (Exception ign) {
             //
-        }
-
-        if (!ext) {
-            throw new IllegalArgumentException("syntax err " + input);
         }
 
         try {
@@ -140,6 +140,40 @@ public class Main extends JavaPlugin {
         throw new IllegalArgumentException("syntax err " + input);
     }
 
+    void every(CommandSender who, List<String> input) {
+        val itr = input.iterator();
+        val label = itr.next();
+        if (!itr.hasNext()) {
+            throw new IllegalArgumentException("no command");
+        }
+
+        Runner runner = toRunner(label, join(itr, ' '));
+        if (runner.period == -1) {
+            pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
+            who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " at " + runner.nextTime.toLocalTime() + " every day(s)");
+        } else {
+            pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
+            who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " every " + label);
+        }
+    }
+
+    @SneakyThrows
+    static Runner toRunner(String input, String run) {
+        if (input.matches("[0-9]+[smhd]")) {
+            val mapping = ImmutableMap.<String, Long>of("s", 1000L, "m", 60000L, "h", 3600000L, "d", 86400000L);
+            long unit = mapping.get(String.valueOf(input.charAt(input.length() - 1)));
+            long l = Long.parseLong(input.substring(0, input.length() - 1)) * unit;
+            return new Runner(LocalDateTime.now().plus(l, ChronoUnit.MILLIS), l, run);
+        }
+
+        LocalTime clock = LocalTime.parse(input);
+        if (clock.isAfter(LocalTime.now())) {
+            return new Runner(LocalDateTime.of(LocalDate.now(), clock), TimeUnit.DAYS.toMillis(1), run);
+        }
+
+        return new Runner(LocalDateTime.of(LocalDate.now().plusDays(1), clock), -1, run);
+    }
+
     static <E> String join(Iterator<E> i, char separator) {
         val buf = new StringBuilder();
         i.forEachRemaining(l -> {
@@ -147,18 +181,6 @@ public class Main extends JavaPlugin {
             buf.append(l);
         });
         return buf.toString();
-    }
-
-    void at(CommandSender who, List<String> input) {
-        Runner runner = toRunner(input, true);
-        pool.schedule(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.MILLISECONDS);
-        who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " at " + runner.nextTime);
-    }
-
-    void every(CommandSender who, List<String> input) {
-        Runner runner = toRunner(input, false);
-        pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
-        who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " at " + runner.nextTime.toLocalTime() + " everyday(s)");
     }
 
     @SneakyThrows
@@ -224,6 +246,7 @@ public class Main extends JavaPlugin {
     static class Runner {
 
         private final LocalDateTime nextTime;
+        private final long period;
         private final String run;
 
         public long until() {

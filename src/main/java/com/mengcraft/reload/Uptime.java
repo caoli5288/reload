@@ -47,6 +47,10 @@ public class Uptime extends Command {
 
     private String time() {
         long l = ChronoUnit.SECONDS.between(up, LocalDateTime.now());
+        return toTimeString(l);
+    }
+
+    public static String toTimeString(long l) {
         if (l > DAY) {
             return (l / DAY) + " day(s), " + hour(l);
         } else if (l > H) {
@@ -55,7 +59,7 @@ public class Uptime extends Command {
         return (l / MIN) + " min(s)";
     }
 
-    private String hour(long l) {
+    private static String hour(long l) {
         return ((l % DAY) / H) + ":" + ((l % H) / MIN);
     }
 }
