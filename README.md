@@ -3,7 +3,7 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 
 ## Command
 - /uptime
-  - Just print like "2017-12-07 up 33 min(s), 39920 tick(s); Load avg: 20.0, 20.0, 20.0".
+  - This command print "2017-12-07 up 33 min(s), 39920 tick(s); Load avg: 20.0, 20.0, 20.0".
 - /at
   - This command schedule command to run at today or tomorrow's given clock.
   - Syntax like "/at 12:00 say hi", "/at 2018-11-11T00:01 say hi" or "/at +1h say hi".
@@ -11,6 +11,8 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /every
   - This command schedule command to run at everyday(s)'s given clock.
   - Syntax like "/every 12:00 say hello".
+- /atq
+  - This command manage all scheduled task.
 - /shutdown
   - Kick all player(s) to other hub defined in `config.yml` and stop the server.
 - /halt
