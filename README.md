@@ -11,6 +11,11 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /every
   - This command schedule command to run at everyday(s)'s given clock.
   - Syntax like "/every 12:00 say hello".
+- /shutdown
+  - Kick all player(s) to other hub defined in `config.yml` and stop the server.
+- /halt
+  - Kill the server immediately without data save and cleanup.
+  - This command call `taskkill /f` if server in windows, other wise `kill -9`.
 
 ## Expression
 Run expression in config.yml to known when to shutdown. If you want to disable it, set it to null or empty string. 

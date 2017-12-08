@@ -1,12 +1,15 @@
 package com.mengcraft.reload;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.management.ManagementFactory;
@@ -20,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -30,6 +34,67 @@ public class Main extends JavaPlugin {
 
     private ScheduledExecutorService watchdog; // GC safe
     private ScheduledExecutorService pool;
+    boolean shutdown;
+    private List<String> kick;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+
+        String expr = getConfig().getString("control.expr");
+
+        if (!(expr == null || expr.isEmpty())) {
+            MainListener l = new MainListener(this, Machine.build(expr));
+
+            getServer().getPluginManager().registerEvents(l, this);
+            getServer().getScheduler().runTaskTimer(this, l, 0, 200);
+        }
+
+        kick = getConfig().getStringList("kick_to");
+        if (!kick.isEmpty()) {
+            getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        }
+
+        pool = new ScheduledThreadPoolExecutor(1);
+        pool.scheduleAtFixedRate(() -> {
+            Ticker.INST.update();
+            if (Ticker.INST.getShort() < 1) {
+                getLogger().log(Level.SEVERE, "TPS < 1, killing...");
+                shutdown(true);
+            }
+        }, 30, 30, TimeUnit.SECONDS);
+
+        getServer().getScheduler().runTaskTimer(this, Ticker.INST, 0, 20);
+
+        PluginHelper.addExecutor(this, new Uptime());
+        PluginHelper.addExecutor(this, "at", "at.use", this::at);
+        PluginHelper.addExecutor(this, "every", "every.use", this::every);
+
+        PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
+        PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
+            who.sendMessage(ChatColor.RED + "System shutdown...");
+            if (!shutdown) {
+                shutdown = true;
+                kickAll();
+                run(this::shutdown, 20);
+            }
+        });
+
+        getConfig().getStringList("schedule").forEach(l -> {
+            val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
+            try {
+                Type type = Type.valueOf(itr.next().toUpperCase());
+                List<String> input = Arrays.asList(itr.next().split(" "));
+                if (type == Type.AT) {
+                    at(Bukkit.getConsoleSender(), input);
+                } else {
+                    every(Bukkit.getConsoleSender(), input);
+                }
+            } catch (Exception ign) {
+                getLogger().warning("!!! Err schedule line -> " + l);
+            }
+        });
+    }
 
     static Runner toRunner(List<String> input, boolean ext) {
         val itr = input.iterator();
@@ -84,56 +149,6 @@ public class Main extends JavaPlugin {
         return buf.toString();
     }
 
-    @Override
-    public void onEnable() {
-        saveDefaultConfig();
-
-        String expr = getConfig().getString("control.expr");
-
-        if (!(expr == null || expr.isEmpty())) {
-            MainListener l = new MainListener(this, Machine.build(expr));
-
-            List<String> kickTo = getConfig().getStringList("kick_to");
-            if (!kickTo.isEmpty()) {
-                getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-                l.setKick(kickTo);
-            }
-
-            getServer().getPluginManager().registerEvents(l, this);
-            getServer().getScheduler().runTaskTimer(this, l, 0, 200);
-        }
-
-        pool = new ScheduledThreadPoolExecutor(1);
-        pool.scheduleAtFixedRate(() -> {
-            Ticker.INST.update();
-            if (Ticker.INST.getShort() < 1) {
-                getLogger().log(Level.SEVERE, "TPS < 1, killing...");
-                shutdown(true);
-            }
-        }, 30, 30, TimeUnit.SECONDS);
-
-        getServer().getScheduler().runTaskTimer(this, Ticker.INST, 0, 20);
-
-        PluginHelper.addExecutor(this, new Uptime());
-        PluginHelper.addExecutor(this, "at", "at.use", this::at);
-        PluginHelper.addExecutor(this, "every", "every.use", this::every);
-
-        getConfig().getStringList("schedule").forEach(l -> {
-            val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
-            try {
-                Type type = Type.valueOf(itr.next().toUpperCase());
-                List<String> input = Arrays.asList(itr.next().split(" "));
-                if (type == Type.AT) {
-                    at(Bukkit.getConsoleSender(), input);
-                } else {
-                    every(Bukkit.getConsoleSender(), input);
-                }
-            } catch (Exception ign) {
-                getLogger().warning("!!! Err schedule line -> " + l);
-            }
-        });
-    }
-
     void at(CommandSender who, List<String> input) {
         Runner runner = toRunner(input, true);
         pool.schedule(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.MILLISECONDS);
@@ -177,6 +192,26 @@ public class Main extends JavaPlugin {
 
     public void shutdown() {
         shutdown(false);
+    }
+
+    public void kickAll() {
+        if (!kick.isEmpty()) {
+            ByteArrayDataOutput buf = ByteStreams.newDataOutput();
+            buf.writeUTF("Connect");
+            buf.writeUTF(nextKickTo());
+            byte[] data = buf.toByteArray();
+
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                p.sendPluginMessage(this, "BungeeCord", data);
+            }
+        }
+    }
+
+
+    public String nextKickTo() {
+        if (kick.isEmpty()) return null;
+        int i = ThreadLocalRandom.current().nextInt(kick.size());
+        return kick.get(i);
     }
 
     enum Type {
