@@ -13,18 +13,24 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.management.ManagementFactory;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 /**
@@ -36,6 +42,10 @@ public class Main extends JavaPlugin {
     private ScheduledExecutorService pool;
     boolean shutdown;
     private List<String> kick;
+
+    private final Map<Integer, Runner> scheduler = new HashMap<>();
+    private int id;
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public void onEnable() {
@@ -68,6 +78,7 @@ public class Main extends JavaPlugin {
 
         PluginHelper.addExecutor(this, new Uptime());
         PluginHelper.addExecutor(this, "at", "at.use", this::at);
+        PluginHelper.addExecutor(this, "atq", "atq.use", this::atq);
         PluginHelper.addExecutor(this, "every", "every.use", this::every);
 
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
@@ -96,6 +107,63 @@ public class Main extends JavaPlugin {
         });
     }
 
+    void atq(CommandSender who, List<String> input) {
+        if (input.isEmpty()) {
+            scheduler.forEach((id, runner) -> {
+                Future<?> future = runner.future;
+                if (!(future.isCancelled() || future.isDone())) {
+                    who.sendMessage(id + " " + runner.desc);
+                }
+            });
+            who.sendMessage("Type '/atq a' to check all(cancelled and done) or '/atq c <id>' to cancel");
+        } else {
+            atq(who, input.iterator());
+        }
+    }
+
+    private final Map<String, BiConsumer<CommandSender, String>> subProcessor = ImmutableMap.of(
+            "/atq a", (who, __i) -> {
+                scheduler.forEach((i, runner) -> {
+                    Future<?> future = runner.future;
+                    String l = i + " " + runner.desc;
+                    if (future.isCancelled()) {
+                        l += " <- cancelled";
+                    } else if (future.isDone()) {
+                        l += " <- done";
+                    }
+                    who.sendMessage(l);
+                });
+            },
+            "/atq c", (who, del) -> {
+                if (del == null) {
+                    who.sendMessage(ChatColor.RED + "Syntax error");
+                    return;
+                }
+                Runner runner = scheduler.get(Integer.valueOf(del));
+                if (runner == null) {
+                    who.sendMessage(ChatColor.RED + "Id not found error");
+                    return;
+                }
+                Future<?> future = runner.future;
+                if (future.isDone() || future.isCancelled()) {
+                    who.sendMessage(ChatColor.RED + "Already done or cancelled error");
+                    return;
+                }
+
+                future.cancel(true);
+                who.sendMessage(del + " " + runner.desc + " cancelled");
+            }
+    );
+
+    void atq(CommandSender who, Iterator<String> itr) {
+        BiConsumer<CommandSender, String> consumer = subProcessor.get("/atq " + itr.next());
+        if (consumer == null) {
+            who.sendMessage(ChatColor.RED + "Unknown command error");
+        } else {
+            consumer.accept(who, itr.hasNext() ? itr.next() : null);
+        }
+    }
+
     void at(CommandSender who, List<String> input) {
         val itr = input.iterator();
         val label = itr.next();
@@ -104,9 +172,11 @@ public class Main extends JavaPlugin {
         }
 
         val runner = new Runner(toTimeAt(label), -1, join(itr, ' '));
-        pool.schedule(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.MILLISECONDS);
+        runner.future = pool.schedule(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.MILLISECONDS);
+        runner.desc = dateFormat.format(new Date()) + " -> at " + label + " " + runner.run;
+        scheduler.put(++id, runner);
 
-        who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " at " + runner.nextTime);
+        who.sendMessage(id + " " + runner.desc);
     }
 
     static LocalDateTime toTimeAt(String input) {
@@ -149,12 +219,15 @@ public class Main extends JavaPlugin {
 
         Runner runner = toRunner(label, join(itr, ' '));
         if (runner.period == -1) {
-            pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
-            who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " at " + runner.nextTime.toLocalTime() + " every day(s)");
+            runner.future = pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
         } else {
-            pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
-            who.sendMessage(ChatColor.GREEN + "Run " + runner.run + " every " + label);
+            runner.future = pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
         }
+
+        runner.desc = dateFormat.format(new Date()) + " -> every " + label + " " + runner.run;
+        scheduler.put(++id, runner);
+
+        who.sendMessage(id + " " + runner.desc);
     }
 
     @SneakyThrows
@@ -248,6 +321,8 @@ public class Main extends JavaPlugin {
         private final LocalDateTime nextTime;
         private final long period;
         private final String run;
+        private Future<?> future;
+        private String desc;
 
         public long until() {
             return LocalDateTime.now().until(nextTime, ChronoUnit.MILLIS);
