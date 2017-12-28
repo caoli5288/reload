@@ -23,7 +23,7 @@ import java.util.logging.Level;
 public class PluginHelper {
 
     @SneakyThrows
-    public static void addExecutor(Plugin plugin, Command command) {
+    public static PluginCommand addExecutor(Plugin plugin, Command command) {
         Field f = SimplePluginManager.class.getDeclaredField("commandMap");
         f.setAccessible(true);
         CommandMap map = (CommandMap) f.get(plugin.getServer().getPluginManager());
@@ -39,6 +39,7 @@ public class PluginHelper {
         inject.setPermissionMessage(command.getPermissionMessage());
         inject.setUsage(command.getUsage());
         map.register(plugin.getName().toLowerCase(), inject);
+        return inject;
     }
 
     public static int run(Plugin plugin, int i, int repeat, IRunner r) {
@@ -63,11 +64,11 @@ public class PluginHelper {
         addExecutor(plugin, command, null, exec);
     }
 
-    public static void addExecutor(Plugin plugin, String command, String permission, IExec exec) {
+    public static PluginCommand addExecutor(Plugin plugin, String command, String permission, IExec exec) {
         Exec e = new Exec(command, exec);
         e.setPermission(permission);
         e.setPermissionMessage(ChatColor.RED + "您没有权限执行此类指令，请联系管理！");
-        addExecutor(plugin, e);
+        return addExecutor(plugin, e);
     }
 
     public interface IExec {
