@@ -17,8 +17,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -56,6 +59,16 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+
+        if (getConfig().getBoolean("valid_sqlite")) {
+            try {
+                validSQLite();
+            } catch (SQLException thr) {
+                getLogger().log(Level.SEVERE, thr + "", thr);
+                shutdown(false);
+                return;
+            }
+        }
 
         String expr = getConfig().getString("control.expr");
 
@@ -113,6 +126,16 @@ public class Main extends JavaPlugin {
                 getLogger().warning("!!! Err schedule line -> " + l);
             }
         });
+    }
+
+    private void validSQLite() throws SQLException {
+        try {
+            File db = File.createTempFile(".valid_sqlite_", ".db");
+            db.deleteOnExit();
+            DriverManager.getConnection("jdbc:sqlite:" + db.getCanonicalPath()).close();
+        } catch (Throwable thr) {
+            throw new SQLException("valid sqlite fail", thr);
+        }
     }
 
     @SneakyThrows
