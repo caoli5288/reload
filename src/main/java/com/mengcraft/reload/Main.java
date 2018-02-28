@@ -8,18 +8,12 @@ import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.SimpleCommandMap;
-import org.bukkit.command.defaults.VanillaCommand;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -111,8 +105,6 @@ public class Main extends JavaPlugin {
             }
         });
 
-        inject("stop", inject);
-
         getConfig().getStringList("schedule").forEach(l -> {
             val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
             try {
@@ -137,34 +129,6 @@ public class Main extends JavaPlugin {
         } catch (Throwable thr) {
             throw new SQLException("valid sqlite fail", thr);
         }
-    }
-
-    @SneakyThrows
-    void inject(String key, PluginCommand command) {
-        Field field = SimplePluginManager.class.getDeclaredField("commandMap");
-        field.setAccessible(true);
-        SimpleCommandMap all = (SimpleCommandMap) field.get(getServer().getPluginManager());
-        Command origin = all.getCommand(key);
-        if (origin == null) {
-            return;
-        }
-
-        field = SimpleCommandMap.class.getDeclaredField("knownCommands");
-        field.setAccessible(true);
-        VanillaCommand inject = new VanillaCommand(key) {
-            public boolean execute(CommandSender who, String label, String[] input) {
-                if (isEnabled()) {
-                    return command.execute(who, label, input);
-                }
-                return origin.execute(who, label, input);
-            }
-        };
-        inject.setDescription(origin.getDescription());
-        inject.setUsage(origin.getUsage());
-
-        ((Map<String, Command>) field.get(all)).put(key.toLowerCase(), inject);
-
-        getLogger().info("### Inject into " + key + " command okay.");
     }
 
     void atq(CommandSender who, List<String> input) {
