@@ -1,5 +1,6 @@
 package com.mengcraft.reload;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -20,23 +21,23 @@ public final class TBox {
     private final int period;
 
     @Setter(value = AccessLevel.NONE)
-    private float value = 20.0F;
+    private final AtomicDouble value = new AtomicDouble(20);
 
-    public void update(int time, int tick) {
+    public void update(long time, long tick) {
         queue.add(new Rec(time, tick));
 
         if (queue.size() > 2 && queue.element().time + period < time) queue.remove();
         if (queue.size() > 1) {
             Rec head = queue.element();
-            value = new BigDecimal(tick - head.tick).divide(new BigDecimal(time - head.time), 2, RoundingMode.HALF_UP).floatValue();
+            value.set(new BigDecimal(tick - head.tick).divide(new BigDecimal(time - head.time), 2, RoundingMode.HALF_UP).doubleValue());
         }
     }
 
     @RequiredArgsConstructor
     private static class Rec {
 
-        private final int time;
-        private final int tick;
+        private final long time;
+        private final long tick;
     }
 
 }

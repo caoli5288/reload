@@ -84,10 +84,11 @@ public class Main extends JavaPlugin {
             getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         }
 
+        boolean b = getConfig().getBoolean("valid_server_alive", true);
         pool = new ScheduledThreadPoolExecutor(1);
         pool.scheduleAtFixedRate(() -> {
             Ticker.INST.update();
-            if (Ticker.INST.getShort() < 1) {
+            if (b && Ticker.INST.getShort() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
