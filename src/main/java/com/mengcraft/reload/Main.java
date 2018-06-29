@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -94,6 +95,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "at", "at.use", this::at);
         PluginHelper.addExecutor(this, "atq", "atq.use", this::atq);
         PluginHelper.addExecutor(this, "every", "every.use", this::every);
+        PluginHelper.addExecutor(this, "sudo", "sudo.use", this::sudo);
 
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
         val inject = PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
@@ -119,6 +121,28 @@ public class Main extends JavaPlugin {
                 getLogger().warning("!!! Err schedule line -> " + l);
             }
         });
+    }
+
+    private void sudo(CommandSender who, List<String> input) {
+        Iterator<String> itr = input.iterator();
+        if (itr.hasNext()) {
+            Player p = Bukkit.getPlayerExact(itr.next());
+            if (p == null) {
+                who.sendMessage("player not online");
+                return;
+            }
+            if (!itr.hasNext()) {
+                who.sendMessage("command missing");
+                return;
+            }
+            StringJoiner joiner = new StringJoiner(" ");
+            while (itr.hasNext()) {
+                joiner.add(itr.next());
+            }
+            p.chat("/" + joiner);
+        } else {
+            who.sendMessage("/sudo <player> <command...>");
+        }
     }
 
     private void validSQLite() throws SQLException {
