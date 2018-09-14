@@ -32,7 +32,7 @@ public class Uptime extends Command {
         if (testPermission(sender)) {
             Ticker ticker = Ticker.INST;
             sender.sendMessage(up.toLocalDate() + " up " + time() + ", " + ticker.tick() + " tick(s); " +
-                    "Load avg: " + colour(ticker.getShort()) + ", " + colour(ticker.getMed()) +
+                    "Load avg: " + colour(ticker.getShort()) + ", " + colour(ticker.getMedium()) +
                     ", " + colour(ticker.getLong()));
             return true;
         }

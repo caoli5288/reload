@@ -8,17 +8,14 @@ import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.SimpleCommandMap;
-import org.bukkit.command.defaults.VanillaCommand;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,6 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -57,6 +55,16 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
 
+        if (getConfig().getBoolean("valid_sqlite")) {
+            try {
+                validSQLite();
+            } catch (SQLException thr) {
+                getLogger().log(Level.SEVERE, thr + "", thr);
+                shutdown(false);
+                return;
+            }
+        }
+
         String expr = getConfig().getString("control.expr");
 
         if (!(expr == null || expr.isEmpty())) {
@@ -71,10 +79,11 @@ public class Main extends JavaPlugin {
             getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         }
 
+        boolean b = getConfig().getBoolean("valid_server_alive", true);
         pool = new ScheduledThreadPoolExecutor(1);
         pool.scheduleAtFixedRate(() -> {
             Ticker.INST.update();
-            if (Ticker.INST.getShort() < 1) {
+            if (b && Ticker.INST.getShort() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
@@ -86,6 +95,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "at", "at.use", this::at);
         PluginHelper.addExecutor(this, "atq", "atq.use", this::atq);
         PluginHelper.addExecutor(this, "every", "every.use", this::every);
+        PluginHelper.addExecutor(this, "sudo", "sudo.use", this::sudo);
 
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
         val inject = PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
@@ -96,8 +106,6 @@ public class Main extends JavaPlugin {
                 run(this::shutdown, 20);
             }
         });
-
-        inject("stop", inject);
 
         getConfig().getStringList("schedule").forEach(l -> {
             val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
@@ -115,32 +123,36 @@ public class Main extends JavaPlugin {
         });
     }
 
-    @SneakyThrows
-    void inject(String key, PluginCommand command) {
-        Field field = SimplePluginManager.class.getDeclaredField("commandMap");
-        field.setAccessible(true);
-        SimpleCommandMap all = (SimpleCommandMap) field.get(getServer().getPluginManager());
-        Command origin = all.getCommand(key);
-        if (origin == null) {
-            return;
-        }
-
-        field = SimpleCommandMap.class.getDeclaredField("knownCommands");
-        field.setAccessible(true);
-        VanillaCommand inject = new VanillaCommand(key) {
-            public boolean execute(CommandSender who, String label, String[] input) {
-                if (isEnabled()) {
-                    return command.execute(who, label, input);
-                }
-                return origin.execute(who, label, input);
+    private void sudo(CommandSender who, List<String> input) {
+        Iterator<String> itr = input.iterator();
+        if (itr.hasNext()) {
+            Player p = Bukkit.getPlayerExact(itr.next());
+            if (p == null) {
+                who.sendMessage("player not online");
+                return;
             }
-        };
-        inject.setDescription(origin.getDescription());
-        inject.setUsage(origin.getUsage());
+            if (!itr.hasNext()) {
+                who.sendMessage("command missing");
+                return;
+            }
+            StringJoiner joiner = new StringJoiner(" ");
+            while (itr.hasNext()) {
+                joiner.add(itr.next());
+            }
+            p.chat("/" + joiner);
+        } else {
+            who.sendMessage("/sudo <player> <command...>");
+        }
+    }
 
-        ((Map<String, Command>) field.get(all)).put(key.toLowerCase(), inject);
-
-        getLogger().info("### Inject into " + key + " command okay.");
+    private void validSQLite() throws SQLException {
+        try {
+            File db = File.createTempFile(".valid_sqlite_", ".db");
+            db.deleteOnExit();
+            DriverManager.getConnection("jdbc:sqlite:" + db.getCanonicalPath()).close();
+        } catch (Throwable thr) {
+            throw new SQLException("valid sqlite fail", thr);
+        }
     }
 
     void atq(CommandSender who, List<String> input) {

@@ -19,6 +19,9 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /halt
   - Kill the server immediately without data save and cleanup.
   - This command call `taskkill /f` if server in windows, other wise `kill -9`.
+- /sudo
+  - The "Switch user do" just like linux's.
+  - Syntax like "/sudo him say hahaha".
 
 ## Expression
 Run expression in config.yml to known when to shutdown. If you want to disable it, set it to null or empty string. 

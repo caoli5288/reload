@@ -1,5 +1,8 @@
 package com.mengcraft.reload;
 
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Created on 16-9-10.
  */
@@ -11,36 +14,37 @@ public enum Ticker implements Runnable {
     private final TBox y = new TBox("medium", 300);
     private final TBox z = new TBox("long", 900);
 
-    private int tick;
+    private final AtomicLong tick = new AtomicLong();
 
     @Override
     public void run() {
-        tick = tick + 20;
+        tick.addAndGet(20);
     }
 
     public void update() {
-        if (tick > 0) {
-            int now = ((int) (System.currentTimeMillis() / 1000));
-            x.update(now, tick);
-            y.update(now, tick);
-            z.update(now, tick);
+        long i = tick.get();
+        if (i >= 1) {
+            long now = Instant.now().getEpochSecond();
+            x.update(now, i);
+            y.update(now, i);
+            z.update(now, i);
         }
     }
 
-    public int tick() {
-        return tick;
+    public long tick() {
+        return tick.get();
     }
 
     public float getShort() {
-        return x.getValue();
+        return x.getValue().floatValue();
     }
 
-    public float getMed() {
-        return y.getValue();
+    public float getMedium() {
+        return y.getValue().floatValue();
     }
 
     public float getLong() {
-        return z.getValue();
+        return z.getValue().floatValue();
     }
 
 }
