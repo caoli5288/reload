@@ -10,7 +10,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -98,12 +101,11 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "sudo", "sudo.use", this::sudo);
 
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
-        val inject = PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
+        PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
             who.sendMessage(ChatColor.RED + "System shutdown...");
             if (!shutdown) {
                 shutdown = true;
-                kickAll();
-                run(this::shutdown, 20);
+                new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
             }
         });
 
@@ -121,6 +123,25 @@ public class Main extends JavaPlugin {
                 getLogger().warning("!!! Err schedule line -> " + l);
             }
         });
+    }
+
+    public static class AwaitHaltLoop extends BukkitRunnable {
+
+        private final Main plugin;
+
+        public AwaitHaltLoop(Main plugin) {
+            this.plugin = plugin;
+        }
+
+        @Override
+        public void run() {
+            if (Bukkit.getOnlinePlayers().isEmpty()) {
+                cancel();
+                plugin.shutdown();
+                return;
+            }
+            plugin.kickAll();
+        }
     }
 
     private void sudo(CommandSender who, List<String> input) {
@@ -250,8 +271,7 @@ public class Main extends JavaPlugin {
         }
 
         if (input.matches("\\+[0-9]+[smhd]")) {
-            val mapping = ImmutableMap.<String, Long>of("s", 1000L, "m", 60000L, "h", 3600000L, "d", 86400000L);
-            long unit = mapping.get(String.valueOf(input.charAt(input.length() - 1)));
+            long unit = timeUnit.get(String.valueOf(input.charAt(input.length() - 1)));
             return LocalDateTime.now().plus(Long.parseLong(input.substring(1, input.length() - 1)) * unit, ChronoUnit.MILLIS);
         }
 
@@ -339,10 +359,15 @@ public class Main extends JavaPlugin {
     }
 
     public void kickAll() {
-        if (!kick.isEmpty()) {
+        if (kick.isEmpty()) {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.kickPlayer(getConfig().getString("message.notify"));
+            }
+        } else {
             ByteArrayDataOutput buf = ByteStreams.newDataOutput();
             buf.writeUTF("Connect");
             buf.writeUTF(nextKickTo());
+
             byte[] data = buf.toByteArray();
 
             for (Player p : Bukkit.getOnlinePlayers()) {

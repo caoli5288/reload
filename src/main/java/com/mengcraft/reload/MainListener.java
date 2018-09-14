@@ -66,8 +66,7 @@ public class MainListener extends Messenger implements Listener, Runnable {
             main.shutdown = true;
             int i = main.getConfig().getInt("wait") * 20;
             main.run(this::note, 0, 55);
-            main.run(main::kickAll, i - 5);
-            main.run(main::shutdown, i);
+            new Main.AwaitHaltLoop(main).runTaskTimer(main, i, 20);
         }
     }
 

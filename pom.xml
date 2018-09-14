@@ -4,7 +4,7 @@
 
     <groupId>com.mengcraft</groupId>
     <artifactId>reload</artifactId>
-    <version>17.12-SNAPSHOT</version>
+    <version>18.9-SNAPSHOT</version>
 
     <build>
         <plugins>
