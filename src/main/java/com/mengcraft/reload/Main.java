@@ -266,11 +266,12 @@ public class Main extends JavaPlugin {
         who.sendMessage(id + " " + runner.desc);
     }
 
+    static Map<String, Long> timeUnit = ImmutableMap.of("s", 1000L, "m", 60000L, "h", 3600000L, "d", 86400000L);
+
     @SneakyThrows
     static Runner toRunner(String input, String run) {
         if (input.matches("[0-9]+[smhd]")) {
-            val mapping = ImmutableMap.<String, Long>of("s", 1000L, "m", 60000L, "h", 3600000L, "d", 86400000L);
-            long unit = mapping.get(String.valueOf(input.charAt(input.length() - 1)));
+            long unit = timeUnit.get(String.valueOf(input.charAt(input.length() - 1)));
             long l = Long.parseLong(input.substring(0, input.length() - 1)) * unit;
             return new Runner(LocalDateTime.now().plus(l, ChronoUnit.MILLIS), l, run);
         }
