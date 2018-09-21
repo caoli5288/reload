@@ -241,11 +241,19 @@ public class Main extends JavaPlugin {
         }
 
         val runner = new Runner(toTimeAt(label), -1, join(itr, ' '));
-        runner.future = pool.schedule(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.MILLISECONDS);
+        runner.future = pool.schedule(() -> runCommand(runner.run), runner.until(), TimeUnit.MILLISECONDS);
         runner.desc = dateFormat.format(new Date()) + " -> at " + label + " " + runner.run;
         scheduler.put(++id, runner);
 
         who.sendMessage(id + " " + runner.desc);
+    }
+
+    private void runCommand(String command) {
+        if (!Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTask(this, () -> runCommand(command));
+            return;
+        }
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
     }
 
     static LocalDateTime toTimeAt(String input) {
@@ -287,9 +295,9 @@ public class Main extends JavaPlugin {
 
         Runner runner = toRunner(label, join(itr, ' '));
         if (runner.period == -1) {
-            runner.future = pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
+            runner.future = pool.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
         } else {
-            runner.future = pool.scheduleAtFixedRate(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
+            runner.future = pool.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
         }
 
         runner.desc = dateFormat.format(new Date()) + " -> every " + label + " " + runner.run;

@@ -11,7 +11,7 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /every
   - This command schedule command to run at everyday(s)'s given clock.
   - Syntax like "/every 12:00 say hello"
-  - or or "/every 1h say hello". Allowed time unit [s]econds, [m]inutes, [h]ours and [d]ays.
+  - or or "/every 1h say hello". Allowed unit suffix are (s)econd, (m)inus, (h)our and (d)ay.
 - /atq
   - This command manage all scheduled task.
 - /shutdown
