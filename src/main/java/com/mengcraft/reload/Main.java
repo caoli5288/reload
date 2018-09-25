@@ -160,7 +160,7 @@ public class Main extends JavaPlugin {
             while (itr.hasNext()) {
                 joiner.add(itr.next());
             }
-            p.chat("/" + joiner);
+            p.chat(String.valueOf(joiner));
         } else {
             who.sendMessage("/sudo <player> <command...>");
         }
