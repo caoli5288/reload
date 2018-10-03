@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -53,6 +54,8 @@ public class Main extends JavaPlugin {
     private final Map<Integer, Runner> scheduler = new HashMap<>();
     private int id;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    @Getter
+    private static Ticker ticker = new Ticker();
 
     @Override
     public void onEnable() {
@@ -85,14 +88,14 @@ public class Main extends JavaPlugin {
         boolean b = getConfig().getBoolean("valid_server_alive", true);
         pool = new ScheduledThreadPoolExecutor(1);
         pool.scheduleAtFixedRate(() -> {
-            Ticker.INST.update();
-            if (b && Ticker.INST.getShort() < 1) {
+            ticker.update();
+            if (b && ticker.getShort() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, killing...");
                 shutdown(true);
             }
-        }, 30, 30, TimeUnit.SECONDS);
+        }, 15, 15, TimeUnit.SECONDS);
 
-        getServer().getScheduler().runTaskTimer(this, Ticker.INST, 0, 20);
+        getServer().getScheduler().runTaskTimer(this, ticker, 0, 20);
 
         PluginHelper.addExecutor(this, new Uptime());
         PluginHelper.addExecutor(this, "at", "at.use", this::at);
@@ -128,14 +131,16 @@ public class Main extends JavaPlugin {
     public static class AwaitHaltLoop extends BukkitRunnable {
 
         private final Main plugin;
+        private int cnt;
 
-        public AwaitHaltLoop(Main plugin) {
+        AwaitHaltLoop(Main plugin) {
             this.plugin = plugin;
         }
 
         @Override
         public void run() {
-            if (Bukkit.getOnlinePlayers().isEmpty()) {
+            cnt++;
+            if (cnt >= 60 || Bukkit.getOnlinePlayers().isEmpty()) {
                 cancel();
                 plugin.shutdown();
                 return;
@@ -351,7 +356,6 @@ public class Main extends JavaPlugin {
         } else {
             watchdog = new ScheduledThreadPoolExecutor(1);
             watchdog.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 120), TimeUnit.SECONDS);
-            watchdog.shutdown();
             // Try common way first
             Bukkit.shutdown();
         }

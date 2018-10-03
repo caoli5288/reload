@@ -30,7 +30,7 @@ public class Uptime extends Command {
     @Override
     public boolean execute(CommandSender sender, String label, String[] i) {
         if (testPermission(sender)) {
-            Ticker ticker = Ticker.INST;
+            Ticker ticker = Main.getTicker();
             sender.sendMessage(up.toLocalDate() + " up " + time() + ", " + ticker.tick() + " tick(s); " +
                     "Load avg: " + colour(ticker.getShort()) + ", " + colour(ticker.getMedium()) +
                     ", " + colour(ticker.getLong()));

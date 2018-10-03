@@ -32,7 +32,7 @@ public class Machine {
         MEMORY(machine -> "" + machine.memory()),
         ONLINE(machine -> "" + Bukkit.getOnlinePlayers().size()),
         TIME(machine -> "" + ((System.currentTimeMillis() - machine.now) / 1000)),
-        TPS(machine -> "" + Ticker.INST.getShort()),
+        TPS(machine -> "" + Main.getTicker().getShort()),
         ;
 
         final Function<Machine, String> func;
