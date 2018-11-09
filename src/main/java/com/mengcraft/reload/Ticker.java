@@ -20,6 +20,9 @@ public class Ticker implements Runnable {
     }
 
     public synchronized void update() {// use synchronized flush memory
+        if (tick == 0) {// server not bootstrap done
+            return;
+        }
         // call in heartbeat thread per 15s
         if (latest == -1) {
             // just init kv pair in first update

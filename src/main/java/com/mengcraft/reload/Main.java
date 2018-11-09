@@ -383,7 +383,11 @@ public class Main extends JavaPlugin {
             byte[] data = buf.toByteArray();
 
             for (Player p : Bukkit.getOnlinePlayers()) {
-                p.sendPluginMessage(this, "BungeeCord", data);
+                if (p.getListeningPluginChannels().contains("BungeeCord")) {
+                    p.sendPluginMessage(this, "BungeeCord", data);
+                } else {
+                    p.kickPlayer(getConfig().getString("message.notify"));
+                }
             }
         }
     }
