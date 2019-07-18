@@ -1,5 +1,6 @@
 control:
   expr: "(${time} > 36000 && ${online} < 1)"
+# Wait for server bootstrapped in seconds and start TPS tracker.
 wait: 15
 force: false
 force_wait: 120

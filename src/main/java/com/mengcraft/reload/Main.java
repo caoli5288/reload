@@ -98,7 +98,7 @@ public class Main extends JavaPlugin {
             }
         }, 15, 15, TimeUnit.SECONDS);
 
-        getServer().getScheduler().runTaskTimer(this, ticker, 0, 20);
+        getServer().getScheduler().runTaskTimer(this, ticker, getConfig().getInt("wait") * 20, 20);
 
         PluginHelper.addExecutor(this, new Uptime());
         PluginHelper.addExecutor(this, "at", "at.use", this::at);

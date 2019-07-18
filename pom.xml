@@ -4,9 +4,10 @@
 
     <groupId>com.mengcraft</groupId>
     <artifactId>reload</artifactId>
-    <version>18.9-SNAPSHOT</version>
+    <version>19.7-SNAPSHOT</version>
 
     <build>
+        <defaultGoal>clean package</defaultGoal>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
