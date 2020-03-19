@@ -1,8 +1,11 @@
 package com.mengcraft.reload;
 
+import com.comphenix.protocol.ProtocolLibrary;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.mengcraft.reload.extension.InteractRateLimiter;
+import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -15,6 +18,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -90,10 +94,14 @@ public class Main extends JavaPlugin {
         pool.scheduleAtFixedRate(() -> {
             ticker.update();
             if (b && ticker.getShort() < 1) {
-                getLogger().log(Level.SEVERE, "TPS < 1, killing...");
+                getLogger().log(Level.SEVERE, "TPS < 1, preparing kill server");
                 for (StackTraceElement element : primary.getStackTrace()) {
                     getLogger().warning("\tat " + element);
                 }
+                if (getConfig().getBoolean("extension.auto_dump")) {
+                    dump();
+                }
+                getLogger().log(Level.SEVERE, "Kill server");
                 shutdown(true);
             }
         }, 15, 15, TimeUnit.SECONDS);
@@ -105,6 +113,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "atq", "atq.use", this::atq);
         PluginHelper.addExecutor(this, "every", "every.use", this::every);
         PluginHelper.addExecutor(this, "sudo", "sudo.use", this::sudo);
+        PluginHelper.addExecutor(this, "dumpmemory", "dumpmemory.use", (sender, list) -> dump());
 
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
         PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
@@ -129,6 +138,13 @@ public class Main extends JavaPlugin {
                 getLogger().warning("!!! Err schedule line -> " + l);
             }
         });
+
+        if (getServer().getPluginManager().isPluginEnabled("ProtocolLib")) {
+            if (getConfig().getBoolean("extension.limit_interact_rate")) {
+                getLogger().info("Enabling ProtocolLib based interact rate limiter");
+                ProtocolLibrary.getProtocolManager().addPacketListener(new InteractRateLimiter.Listener());
+            }
+        }
     }
 
     public static class AwaitHaltLoop extends BukkitRunnable {
@@ -371,6 +387,16 @@ public class Main extends JavaPlugin {
 
     public void shutdown() {
         shutdown(false);
+    }
+
+    public void dump() {
+        String filename = "dump-" + LocalDateTime.now().toString() + ".hprof";
+        HotSpotDiagnosticMXBean diagnostic = ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class);
+        try {
+            diagnostic.dumpHeap(filename, false);
+        } catch (IOException e) {
+        }
+        getLogger().log(Level.INFO, "Heap dumped to " + filename);
     }
 
     public void kickAll() {
