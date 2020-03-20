@@ -4,7 +4,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.mengcraft.reload.extension.InteractRateLimiter;
+import com.mengcraft.reload.extension.ProtocolFilter;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Data;
 import lombok.Getter;
@@ -142,7 +142,7 @@ public class Main extends JavaPlugin {
         if (getServer().getPluginManager().isPluginEnabled("ProtocolLib")) {
             if (getConfig().getBoolean("extension.limit_interact_rate")) {
                 getLogger().info("Enabling ProtocolLib based interact rate limiter");
-                ProtocolLibrary.getProtocolManager().addPacketListener(new InteractRateLimiter.Listener());
+                ProtocolLibrary.getProtocolManager().addPacketListener(new ProtocolFilter.InteractLimiter(getConfig()));
             }
         }
     }

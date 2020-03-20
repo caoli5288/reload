@@ -16,3 +16,6 @@ valid_server_alive: true
 extension:
   auto_dump: true
   limit_interact_rate: true
+  interact_rate_deny: 5
+  interact_rate_kick: 20
+  interact_rate_kick_message: "检测到数据异常"

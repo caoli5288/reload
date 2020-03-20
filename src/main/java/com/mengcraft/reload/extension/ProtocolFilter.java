@@ -9,6 +9,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.mengcraft.reload.Main;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.UUID;
@@ -16,36 +17,45 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-public class InteractRateLimiter {
+public class ProtocolFilter {
 
-    public static class Listener extends PacketAdapter {
+    public static class InteractLimiter extends PacketAdapter {
 
         private final LoadingCache<UUID, Count> cache = CacheBuilder.newBuilder()
                 .expireAfterWrite(1, TimeUnit.SECONDS)
                 .build(CacheLoader.from(() -> new Count(0)));
+        private final int deny;
+        private final int kick;
+        private final String message;
 
-        public Listener() {
+        public InteractLimiter(Configuration config) {
             super(JavaPlugin.getPlugin(Main.class), PacketType.Play.Client.USE_ENTITY);
+            deny = config.getInt("extension.interact_rate_deny", 5) << 2;
+            kick = config.getInt("extension.interact_rate_kick", 20) << 2;
+            message = config.getString("extension.interact_rate_kick_message");
         }
 
         @Override
         public void onPacketReceiving(PacketEvent event) {
             try {
                 Count count = cache.get(event.getPlayer().getUniqueId());
-                if (count.count >= 20) {
-                    ProtocolLibrary.getPlugin().getLogger().log(Level.WARNING, String.format("player %s interact too quickly!", event.getPlayer().getName()));
+                if (count.count >= deny) {
                     event.setCancelled(true);
-                } else {
-                    EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);
-                    switch (action) {
-                        case ATTACK:
-                            count.count += 4;
-                            break;
-                        case INTERACT:
-                        case INTERACT_AT:
-                            count.count++;
-                            break;
+                    if (count.count >= kick) {
+                        ProtocolLibrary.getPlugin().getLogger().log(Level.WARNING, String.format("kick player %s interact too quickly! ", event.getPlayer().getName()));
+                        event.getPlayer().kickPlayer(message);
+                        return;// fast return
                     }
+                }
+                EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);
+                switch (action) {
+                    case ATTACK:
+                        count.count += 4;
+                        break;
+                    case INTERACT:
+                    case INTERACT_AT:
+                        count.count++;
+                        break;
                 }
             } catch (ExecutionException ignore) {
             }
