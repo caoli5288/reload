@@ -9,7 +9,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.mengcraft.reload.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.Configuration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.UUID;
@@ -42,8 +44,9 @@ public class ProtocolFilter {
                 if (count.count >= deny) {
                     event.setCancelled(true);
                     if (count.count >= kick) {
-                        ProtocolLibrary.getPlugin().getLogger().log(Level.WARNING, String.format("kick player %s interact too quickly! ", event.getPlayer().getName()));
-                        event.getPlayer().kickPlayer(message);
+                        Plugin lib = ProtocolLibrary.getPlugin();
+                        lib.getLogger().log(Level.WARNING, String.format("kick player %s interact too quickly! ", event.getPlayer().getName()));
+                        Bukkit.getScheduler().runTask(lib, () -> event.getPlayer().kickPlayer(message));
                         return;// fast return
                     }
                 }
