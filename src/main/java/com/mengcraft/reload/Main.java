@@ -123,6 +123,7 @@ public class Main extends JavaPlugin {
                 new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
             }
         });
+        PluginHelper.addExecutor(this, "async", this::async);
 
         getConfig().getStringList("schedule").forEach(l -> {
             val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
@@ -145,6 +146,11 @@ public class Main extends JavaPlugin {
                 ProtocolLibrary.getProtocolManager().addPacketListener(new ProtocolFilter.InteractLimiter(getConfig()));
             }
         }
+    }
+
+    private void async(CommandSender sender, List<String> params) {
+        String joins = String.join(" ", params);
+        pool.execute(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), joins));
     }
 
     public static class AwaitHaltLoop extends BukkitRunnable {

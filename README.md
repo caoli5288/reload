@@ -22,6 +22,10 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /sudo
   - The "Switch user do" just like linux's.
   - Syntax like "/sudo him say hahaha".
+- /dumpmemory
+  - dump JVM.
+- /async <commands>
+  - Call commands asynchronous.
 
 ## Expression
 Run expression in config.yml to known when to shutdown. If you want to disable it, set it to null or empty string. 
