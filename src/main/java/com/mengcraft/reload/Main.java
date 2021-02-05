@@ -210,6 +210,7 @@ public class Main extends JavaPlugin {
 
     private void validSQLite() throws SQLException {
         try {
+            Class.forName("org.sqlite.JDBC");
             File db = File.createTempFile(".valid_sqlite_", ".db");
             db.deleteOnExit();
             DriverManager.getConnection("jdbc:sqlite:" + db.getCanonicalPath()).close();
