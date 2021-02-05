@@ -1,10 +1,8 @@
 package com.mengcraft.reload;
 
-import com.comphenix.protocol.ProtocolLibrary;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.mengcraft.reload.extension.ProtocolFilter;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Data;
 import lombok.Getter;
@@ -13,6 +11,7 @@ import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -35,9 +34,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -48,8 +47,7 @@ import java.util.logging.Level;
  */
 public class Main extends JavaPlugin {
 
-    private ScheduledExecutorService watchdog; // GC safe
-    private ScheduledExecutorService pool;
+    private ScheduledExecutorService async;
     boolean shutdown;
     private List<String> kick;
 
@@ -57,15 +55,28 @@ public class Main extends JavaPlugin {
     private int id;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     @Getter
-    private static Ticker ticker = new Ticker();
+    private static Ticker ticker;
     private Thread primary;
+    private Future<?> bootstrapWatchdog;
+
+    @Override
+    public void onLoad() {
+        primary = Thread.currentThread();
+        async = Executors.newSingleThreadScheduledExecutor();
+        saveDefaultConfig();
+        reloadConfig();
+
+        int s = getConfig().getInt("bootstrap_watchdog", 600);
+        if (s > 0) {
+            bootstrapWatchdog = async.schedule(() -> shutdown(true), s, TimeUnit.SECONDS);
+            getLogger().info("Schedule bootstrap watchdog task");
+        }
+    }
 
     @Override
     public void onEnable() {
-        primary = Thread.currentThread();
-        saveDefaultConfig();
-
-        if (getConfig().getBoolean("valid_sqlite")) {
+        FileConfiguration config = getConfig();
+        if (config.getBoolean("valid_sqlite")) {
             try {
                 validSQLite();
             } catch (SQLException thr) {
@@ -75,30 +86,38 @@ public class Main extends JavaPlugin {
             }
         }
 
-        String expr = getConfig().getString("control.expr");
+        if (bootstrapWatchdog != null) {
+            Bukkit.getScheduler().runTask(this, () -> {
+                bootstrapWatchdog.cancel(false);
+                getLogger().info("Cancel bootstrap watchdog task");
+            });
+        }
 
-        if (!(expr == null || expr.isEmpty())) {
+        ticker = new Ticker();
+
+        String expr = config.getString("control.expr");
+
+        if (config.getBoolean("control.enable", true) && !Utils.isNullOrEmpty(expr)) {
             MainListener l = new MainListener(this, Machine.build(expr));
 
             getServer().getPluginManager().registerEvents(l, this);
             getServer().getScheduler().runTaskTimer(this, l, 0, 200);
         }
 
-        kick = getConfig().getStringList("kick_to");
+        kick = config.getStringList("kick_to");
         if (!kick.isEmpty()) {
             getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         }
 
-        boolean b = getConfig().getBoolean("valid_server_alive", true);
-        pool = new ScheduledThreadPoolExecutor(1);
-        pool.scheduleAtFixedRate(() -> {
+        boolean b = config.getBoolean("valid_server_alive", true);
+        async.scheduleAtFixedRate(() -> {
             ticker.update();
             if (b && ticker.getShort() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, preparing kill server");
                 for (StackTraceElement element : primary.getStackTrace()) {
                     getLogger().warning("\tat " + element);
                 }
-                if (getConfig().getBoolean("extension.auto_dump")) {
+                if (config.getBoolean("extension.auto_dump")) {
                     dump();
                 }
                 getLogger().log(Level.SEVERE, "Kill server");
@@ -106,7 +125,7 @@ public class Main extends JavaPlugin {
             }
         }, 15, 15, TimeUnit.SECONDS);
 
-        getServer().getScheduler().runTaskTimer(this, ticker, getConfig().getInt("wait") * 20, 20);
+        getServer().getScheduler().runTaskTimer(this, ticker, config.getInt("wait") * 20, 20);
 
         PluginHelper.addExecutor(this, new Uptime());
         PluginHelper.addExecutor(this, "at", "at.use", this::at);
@@ -125,7 +144,7 @@ public class Main extends JavaPlugin {
         });
         PluginHelper.addExecutor(this, "async", this::async);
 
-        getConfig().getStringList("schedule").forEach(l -> {
+        config.getStringList("schedule").forEach(l -> {
             val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
             try {
                 Type type = Type.valueOf(itr.next().toUpperCase());
@@ -139,18 +158,11 @@ public class Main extends JavaPlugin {
                 getLogger().warning("!!! Err schedule line -> " + l);
             }
         });
-
-        if (getServer().getPluginManager().isPluginEnabled("ProtocolLib")) {
-            if (getConfig().getBoolean("extension.limit_interact_rate")) {
-                getLogger().info("Enabling ProtocolLib based interact rate limiter");
-                ProtocolLibrary.getProtocolManager().addPacketListener(new ProtocolFilter.InteractLimiter(getConfig()));
-            }
-        }
     }
 
     private void async(CommandSender sender, List<String> params) {
         String joins = String.join(" ", params);
-        pool.execute(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), joins));
+        async.execute(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), joins));
     }
 
     public static class AwaitHaltLoop extends BukkitRunnable {
@@ -271,7 +283,7 @@ public class Main extends JavaPlugin {
         }
 
         val runner = new Runner(toTimeAt(label), -1, join(itr, ' '));
-        runner.future = pool.schedule(() -> runCommand(runner.run), runner.until(), TimeUnit.MILLISECONDS);
+        runner.future = async.schedule(() -> runCommand(runner.run), runner.until(), TimeUnit.MILLISECONDS);
         runner.desc = dateFormat.format(new Date()) + " -> at " + label + " " + runner.run;
         scheduler.put(++id, runner);
 
@@ -325,9 +337,9 @@ public class Main extends JavaPlugin {
 
         Runner runner = toRunner(label, join(itr, ' '));
         if (runner.period == -1) {
-            runner.future = pool.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
+            runner.future = async.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
         } else {
-            runner.future = pool.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
+            runner.future = async.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
         }
 
         runner.desc = dateFormat.format(new Date()) + " -> every " + label + " " + runner.run;
@@ -379,8 +391,7 @@ public class Main extends JavaPlugin {
                 b.start();
             }
         } else {
-            watchdog = new ScheduledThreadPoolExecutor(1);
-            watchdog.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 120), TimeUnit.SECONDS);
+            async.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 120), TimeUnit.SECONDS);
             // Try common way first
             Bukkit.shutdown();
         }
@@ -388,7 +399,7 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (!(pool == null)) pool.shutdown();
+        if (!(async == null)) async.shutdown();
     }
 
     public void shutdown() {
