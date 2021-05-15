@@ -139,6 +139,10 @@ public class Main extends JavaPlugin {
             who.sendMessage(ChatColor.RED + "System shutdown...");
             if (!shutdown) {
                 shutdown = true;
+                if (!Utils.isNullOrEmpty(kick)) {
+                    shutdown();
+                    return;
+                }
                 new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
             }
         });
@@ -394,7 +398,7 @@ public class Main extends JavaPlugin {
         } else {
             async.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 120), TimeUnit.SECONDS);
             // Try common way first
-            Bukkit.shutdown();
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), getConfig().getString("stop_command", "stop"));
         }
     }
 
