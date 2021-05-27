@@ -3,7 +3,6 @@ control:
   enable: false
 # Wait for server bootstrapped in seconds and start TPS tracker.
 wait: 15
-force: false
 force_wait: 120
 kick_to:
   - "lobby-1"

@@ -6,8 +6,11 @@
     <artifactId>reload</artifactId>
     <version>21.2-SNAPSHOT</version>
 
+    <name>Reload</name>
+
     <build>
         <defaultGoal>clean package</defaultGoal>
+        <finalName>${project.name}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

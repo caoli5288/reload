@@ -58,6 +58,7 @@ public class Main extends JavaPlugin {
     private static Ticker ticker;
     private Thread primary;
     private Future<?> bootstrapWatchdog;
+    private boolean serverValid;
 
     @Override
     public void onLoad() {
@@ -109,10 +110,10 @@ public class Main extends JavaPlugin {
             getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         }
 
-        boolean b = config.getBoolean("valid_server_alive", true);
+        serverValid = config.getBoolean("valid_server_alive", true);
         async.scheduleAtFixedRate(() -> {
             ticker.update();
-            if (b && ticker.getShort() < 1) {
+            if (serverValid && ticker.getShort() < 1) {
                 getLogger().log(Level.SEVERE, "TPS < 1, preparing kill server");
                 for (StackTraceElement element : primary.getStackTrace()) {
                     getLogger().warning("\tat " + element);
@@ -125,7 +126,7 @@ public class Main extends JavaPlugin {
             }
         }, 15, 15, TimeUnit.SECONDS);
 
-        getServer().getScheduler().runTaskTimer(this, ticker, config.getInt("wait") * 20, 20);
+        getServer().getScheduler().runTaskTimer(this, ticker, config.getInt("wait") * 20L, 20);
 
         PluginHelper.addExecutor(this, new Uptime());
         PluginHelper.addExecutor(this, "at", "at.use", this::at);
@@ -215,9 +216,7 @@ public class Main extends JavaPlugin {
     private void validSQLite() throws SQLException {
         try {
             Class.forName("org.sqlite.JDBC");
-            File db = File.createTempFile(".valid_sqlite_", ".db");
-            db.deleteOnExit();
-            DriverManager.getConnection("jdbc:sqlite:" + db.getCanonicalPath()).close();
+            DriverManager.getConnection("jdbc:sqlite::memory:").close();
         } catch (Throwable thr) {
             throw new SQLException("valid sqlite fail", thr);
         }
@@ -382,7 +381,7 @@ public class Main extends JavaPlugin {
 
     @SneakyThrows
     public void shutdown(boolean force) {
-        if (force || getConfig().getBoolean("force")) {
+        if (force) {
             String system = System.getProperty("os.name").toLowerCase();
 
             String n = ManagementFactory.getRuntimeMXBean().getName();
@@ -412,7 +411,7 @@ public class Main extends JavaPlugin {
     }
 
     public void dump() {
-        String filename = "dump-" + LocalDateTime.now().toString() + ".hprof";
+        String filename = "dump-" + LocalDateTime.now() + ".hprof";
         HotSpotDiagnosticMXBean diagnostic = ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class);
         try {
             diagnostic.dumpHeap(filename, false);
