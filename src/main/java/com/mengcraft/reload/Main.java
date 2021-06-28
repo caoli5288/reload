@@ -3,6 +3,7 @@ package com.mengcraft.reload;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.mengcraft.reload.command.CommandConnect;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Data;
 import lombok.Getter;
@@ -16,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.sql.DriverManager;
@@ -59,9 +59,12 @@ public class Main extends JavaPlugin {
     private Thread primary;
     private Future<?> bootstrapWatchdog;
     private boolean serverValid;
+    @Getter
+    private static Main instance;
 
     @Override
     public void onLoad() {
+        instance = this;
         primary = Thread.currentThread();
         async = Executors.newSingleThreadScheduledExecutor();
         saveDefaultConfig();
@@ -147,7 +150,8 @@ public class Main extends JavaPlugin {
                 new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
             }
         });
-        PluginHelper.addExecutor(this, "async", this::async);
+        PluginHelper.addExecutor(this, "async", "async.use",this::async);
+        PluginHelper.addExecutor(this, "rconnect", "rconnect.use", new CommandConnect());
 
         config.getStringList("schedule").forEach(l -> {
             val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
