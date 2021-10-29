@@ -14,12 +14,12 @@ import org.bukkit.event.server.ServerListPingEvent;
 /**
  * Created on 16-8-7.
  */
-public class MainListener extends Messenger implements Listener, Runnable {
+public class MachineListener extends Messenger implements Listener, Runnable {
 
     private final Main main;
     private final Machine machine;
 
-    public MainListener(Main main, Machine machine) {
+    public MachineListener(Main main, Machine machine) {
         super(main);
         this.main = main;
         this.machine = machine;
@@ -54,19 +54,13 @@ public class MainListener extends Messenger implements Listener, Runnable {
 
     @Override
     public void run() {
-        if (!main.shutdown) {
-            process();
+        if (main.shutdown) {
+            return;
         }
-    }
-
-    private void process() {
         if (machine.process()) {
             main.getLogger().info("Express " + machine.getExpr() + " matched, " +
                     "scheduling shutdown...");
-            main.shutdown = true;
-            int i = main.getConfig().getInt("wait") * 20;
-            main.run(this::note, 0, 55);
-            new Main.AwaitHaltLoop(main).runTaskTimer(main, i, 20);
+            main.shutdown0();
         }
     }
 

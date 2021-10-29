@@ -13,7 +13,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
@@ -69,15 +68,15 @@ public class Machine {
 
     @SneakyThrows
     public boolean process() {
-        return ((boolean) engine.eval(express(expr, list.iterator())));
+        return (boolean) engine.eval(expr());
     }
 
-    String express(String expr, Iterator<Token> itr) {
-        if (itr.hasNext()) {
-            val token = itr.next();
-            return express(expr.replace(token.key, token.func.apply(this)), itr);
+    private String expr() {
+        String s = expr;
+        for (Token token : list) {
+            s = s.replace(token.key, token.func.apply(this));
         }
-        return expr;
+        return s;
     }
 
     float memory() {

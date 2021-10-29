@@ -102,7 +102,7 @@ public class Main extends JavaPlugin {
         String expr = config.getString("control.expr");
 
         if (config.getBoolean("control.enable", true) && !Utils.isNullOrEmpty(expr)) {
-            MainListener l = new MainListener(this, Machine.build(expr));
+            MachineListener l = new MachineListener(this, Machine.build(expr));
 
             getServer().getPluginManager().registerEvents(l, this);
             getServer().getScheduler().runTaskTimer(this, l, 0, 200);
@@ -141,14 +141,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
         PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
             who.sendMessage(ChatColor.RED + "System shutdown...");
-            if (!shutdown) {
-                shutdown = true;
-                if (!Utils.isNullOrEmpty(kick)) {
-                    shutdown();
-                    return;
-                }
-                new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
-            }
+            shutdown0();
         });
         PluginHelper.addExecutor(this, "async", "async.use",this::async);
         PluginHelper.addExecutor(this, "rconnect", "rconnect.use", new CommandConnect());
@@ -167,6 +160,17 @@ public class Main extends JavaPlugin {
                 getLogger().warning("!!! Err schedule line -> " + l);
             }
         });
+    }
+
+    void shutdown0() {
+        if (!shutdown) {
+            shutdown = true;
+            if (!Utils.isNullOrEmpty(kick)) {
+                shutdown();
+                return;
+            }
+            new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
+        }
     }
 
     private void async(CommandSender sender, List<String> params) {
