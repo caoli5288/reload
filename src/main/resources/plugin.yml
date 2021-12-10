@@ -1,3 +1,6 @@
 name: Reload
 main: com.mengcraft.reload.Main
 version: ${project.version}
+
+softdepend:
+  - PlaceholderAPI

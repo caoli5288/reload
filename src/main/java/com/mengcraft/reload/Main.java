@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.mengcraft.reload.command.CommandConnect;
+import com.mengcraft.reload.command.CommandEcho;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Data;
 import lombok.Getter;
@@ -145,6 +146,7 @@ public class Main extends JavaPlugin {
         });
         PluginHelper.addExecutor(this, "async", "async.use",this::async);
         PluginHelper.addExecutor(this, "rconnect", "rconnect.use", new CommandConnect());
+        PluginHelper.addExecutor(this, "echo", "echo.use", new CommandEcho());
 
         config.getStringList("schedule").forEach(l -> {
             val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
