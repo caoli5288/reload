@@ -7,6 +7,7 @@ import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
 import com.mengcraft.reload.command.at.CommandEvery;
+import com.mengcraft.reload.variable.TimeVariable;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -135,6 +136,9 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "echo", "echo.use", new CommandEcho());
 
         config.getStringList("schedule").forEach(this::runCommand);
+
+        // variables
+        new TimeVariable(this, "time").register();
     }
 
     void shutdown0() {

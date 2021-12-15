@@ -31,8 +31,8 @@
 
     <repositories>
         <repository>
-            <id>repo-spigot</id>
-            <url>http://ci.mengcraft.com:8081/plugin/repository/everything/</url>
+            <id>repo-i7mc</id>
+            <url>https://repo.i7mc.com/maven2</url>
         </repository>
     </repositories>
 
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.18</version>
+            <version>1.18.22</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
