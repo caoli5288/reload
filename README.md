@@ -26,6 +26,8 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
   - dump JVM.
 - /async <commands>
   - Call commands asynchronous.
+- /echo <player_name> \[msg...]
+  - Format messages for given player. 
 
 ## Expression
 Run expression in config.yml to known when to shutdown. If you want to disable it, set it to null or empty string. 

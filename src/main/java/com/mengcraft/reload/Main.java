@@ -1,15 +1,15 @@
 package com.mengcraft.reload;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandEcho;
+import com.mengcraft.reload.command.at.CommandAt;
+import com.mengcraft.reload.command.at.CommandAtq;
+import com.mengcraft.reload.command.at.CommandEvery;
 import com.sun.management.HotSpotDiagnosticMXBean;
-import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -22,25 +22,15 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 /**
@@ -48,20 +38,16 @@ import java.util.logging.Level;
  */
 public class Main extends JavaPlugin {
 
-    private ScheduledExecutorService async;
-    boolean shutdown;
-    private List<String> kick;
-
-    private final Map<Integer, Runner> scheduler = new HashMap<>();
-    private int id;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static ScheduledExecutorService async;
     @Getter
     private static Ticker ticker;
+    @Getter
+    private static Main instance;
+    boolean shutdown;
+    private List<String> kick;
     private Thread primary;
     private Future<?> bootstrapWatchdog;
     private boolean serverValid;
-    @Getter
-    private static Main instance;
 
     @Override
     public void onLoad() {
@@ -133,9 +119,9 @@ public class Main extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, ticker, config.getInt("wait") * 20L, 20);
 
         PluginHelper.addExecutor(this, new Uptime());
-        PluginHelper.addExecutor(this, "at", "at.use", this::at);
-        PluginHelper.addExecutor(this, "atq", "atq.use", this::atq);
-        PluginHelper.addExecutor(this, "every", "every.use", this::every);
+        PluginHelper.addExecutor(this, "at", "at.use", new CommandAt());
+        PluginHelper.addExecutor(this, "atq", "atq.use", new CommandAtq());
+        PluginHelper.addExecutor(this, "every", "every.use", new CommandEvery());
         PluginHelper.addExecutor(this, "sudo", "sudo.use", this::sudo);
         PluginHelper.addExecutor(this, "dumpmemory", "dumpmemory.use", (sender, list) -> dump());
 
@@ -148,20 +134,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "rconnect", "rconnect.use", new CommandConnect());
         PluginHelper.addExecutor(this, "echo", "echo.use", new CommandEcho());
 
-        config.getStringList("schedule").forEach(l -> {
-            val itr = Arrays.asList(l.trim().split(" ", 2)).iterator();
-            try {
-                Type type = Type.valueOf(itr.next().toUpperCase());
-                List<String> input = Arrays.asList(itr.next().split(" "));
-                if (type == Type.AT) {
-                    at(Bukkit.getConsoleSender(), input);
-                } else {
-                    every(Bukkit.getConsoleSender(), input);
-                }
-            } catch (Exception ign) {
-                getLogger().warning("!!! Err schedule line -> " + l);
-            }
-        });
+        config.getStringList("schedule").forEach(this::runCommand);
     }
 
     void shutdown0() {
@@ -178,27 +151,6 @@ public class Main extends JavaPlugin {
     private void async(CommandSender sender, List<String> params) {
         String joins = String.join(" ", params);
         async.execute(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), joins));
-    }
-
-    public static class AwaitHaltLoop extends BukkitRunnable {
-
-        private final Main plugin;
-        private int cnt;
-
-        AwaitHaltLoop(Main plugin) {
-            this.plugin = plugin;
-        }
-
-        @Override
-        public void run() {
-            cnt++;
-            if (cnt >= 60 || Bukkit.getOnlinePlayers().isEmpty()) {
-                cancel();
-                plugin.shutdown();
-                return;
-            }
-            plugin.kickAll();
-        }
     }
 
     private void sudo(CommandSender who, List<String> input) {
@@ -232,161 +184,12 @@ public class Main extends JavaPlugin {
         }
     }
 
-    void atq(CommandSender who, List<String> input) {
-        if (input.isEmpty()) {
-            scheduler.forEach((id, runner) -> {
-                Future<?> future = runner.future;
-                if (!(future.isCancelled() || future.isDone())) {
-                    who.sendMessage(id + " " + runner.desc);
-                }
-            });
-            who.sendMessage("Type '/atq a' to check all(cancelled and done) or '/atq c <id>' to cancel");
-        } else {
-            atq(who, input.iterator());
-        }
-    }
-
-    private final Map<String, BiConsumer<CommandSender, String>> subProcessor = ImmutableMap.of(
-            "/atq a", (who, __i) -> {
-                scheduler.forEach((i, runner) -> {
-                    Future<?> future = runner.future;
-                    String l = i + " " + runner.desc;
-                    if (future.isCancelled()) {
-                        l += " <- cancelled";
-                    } else if (future.isDone()) {
-                        l += " <- done";
-                    }
-                    who.sendMessage(l);
-                });
-            },
-            "/atq c", (who, del) -> {
-                if (del == null) {
-                    who.sendMessage(ChatColor.RED + "Syntax error");
-                    return;
-                }
-                Runner runner = scheduler.get(Integer.valueOf(del));
-                if (runner == null) {
-                    who.sendMessage(ChatColor.RED + "Id not found error");
-                    return;
-                }
-                Future<?> future = runner.future;
-                if (future.isDone() || future.isCancelled()) {
-                    who.sendMessage(ChatColor.RED + "Already done or cancelled error");
-                    return;
-                }
-
-                future.cancel(true);
-                who.sendMessage(del + " " + runner.desc + " cancelled");
-            }
-    );
-
-    void atq(CommandSender who, Iterator<String> itr) {
-        BiConsumer<CommandSender, String> consumer = subProcessor.get("/atq " + itr.next());
-        if (consumer == null) {
-            who.sendMessage(ChatColor.RED + "Unknown command error");
-        } else {
-            consumer.accept(who, itr.hasNext() ? itr.next() : null);
-        }
-    }
-
-    void at(CommandSender who, List<String> input) {
-        val itr = input.iterator();
-        val label = itr.next();
-        if (!itr.hasNext()) {
-            throw new IllegalArgumentException("no command");
-        }
-
-        val runner = new Runner(toTimeAt(label), -1, join(itr, ' '));
-        runner.future = async.schedule(() -> runCommand(runner.run), runner.until(), TimeUnit.MILLISECONDS);
-        runner.desc = dateFormat.format(new Date()) + " -> at " + label + " " + runner.run;
-        scheduler.put(++id, runner);
-
-        who.sendMessage(id + " " + runner.desc);
-    }
-
-    private void runCommand(String command) {
+    public void runCommand(String command) {
         if (!Bukkit.isPrimaryThread()) {
             Bukkit.getScheduler().runTask(this, () -> runCommand(command));
             return;
         }
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-    }
-
-    static LocalDateTime toTimeAt(String input) {
-        try {
-            LocalTime clock = LocalTime.parse(input);
-            if (clock.isAfter(LocalTime.now())) {
-                return LocalDateTime.of(LocalDate.now(), clock);
-            }
-
-            return LocalDateTime.of(LocalDate.now().plusDays(1), clock);
-        } catch (Exception ign) {
-            //
-        }
-
-        try {
-            LocalDateTime next = LocalDateTime.parse(input);
-            if (!next.isAfter(LocalDateTime.now())) {
-                throw new IllegalArgumentException("invalid datetime" + input);
-            }
-            return next;
-        } catch (DateTimeParseException ign) {
-            //
-        }
-
-        if (input.matches("\\+[0-9]+[smhd]")) {
-            long unit = timeUnit.get(String.valueOf(input.charAt(input.length() - 1)));
-            return LocalDateTime.now().plus(Long.parseLong(input.substring(1, input.length() - 1)) * unit, ChronoUnit.MILLIS);
-        }
-
-        throw new IllegalArgumentException("syntax err " + input);
-    }
-
-    void every(CommandSender who, List<String> input) {
-        val itr = input.iterator();
-        val label = itr.next();
-        if (!itr.hasNext()) {
-            throw new IllegalArgumentException("no command");
-        }
-
-        Runner runner = toRunner(label, join(itr, ' '));
-        if (runner.period == -1) {
-            runner.future = async.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
-        } else {
-            runner.future = async.scheduleAtFixedRate(() -> runCommand(runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
-        }
-
-        runner.desc = dateFormat.format(new Date()) + " -> every " + label + " " + runner.run;
-        scheduler.put(++id, runner);
-
-        who.sendMessage(id + " " + runner.desc);
-    }
-
-    static Map<String, Long> timeUnit = ImmutableMap.of("s", 1000L, "m", 60000L, "h", 3600000L, "d", 86400000L);
-
-    @SneakyThrows
-    static Runner toRunner(String input, String run) {
-        if (input.matches("[0-9]+[smhd]")) {
-            long unit = timeUnit.get(String.valueOf(input.charAt(input.length() - 1)));
-            long l = Long.parseLong(input.substring(0, input.length() - 1)) * unit;
-            return new Runner(LocalDateTime.now().plus(l, ChronoUnit.MILLIS), l, run);
-        }
-
-        LocalTime clock = LocalTime.parse(input);
-        if (clock.isAfter(LocalTime.now())) {
-            return new Runner(LocalDateTime.of(LocalDate.now(), clock), TimeUnit.DAYS.toMillis(1), run);
-        }
-
-        return new Runner(LocalDateTime.of(LocalDate.now().plusDays(1), clock), -1, run);
-    }
-
-    static <E> String join(Iterator<E> i, char separator) {
-        val buf = new StringBuilder();
-        i.forEachRemaining(l -> {
-            if (buf.length() > 0) buf.append(separator);
-            buf.append(l);
-        });
-        return buf.toString();
     }
 
     @SneakyThrows
@@ -452,31 +255,10 @@ public class Main extends JavaPlugin {
         }
     }
 
-
     public String nextKickTo() {
         if (kick.isEmpty()) return null;
         int i = ThreadLocalRandom.current().nextInt(kick.size());
         return kick.get(i);
-    }
-
-    enum Type {
-
-        AT,
-        EVERY;
-    }
-
-    @Data
-    static class Runner {
-
-        private final LocalDateTime nextTime;
-        private final long period;
-        private final String run;
-        private Future<?> future;
-        private String desc;
-
-        public long until() {
-            return LocalDateTime.now().until(nextTime, ChronoUnit.MILLIS);
-        }
     }
 
     public void run(Runnable r, int delay, int i) {
@@ -485,6 +267,31 @@ public class Main extends JavaPlugin {
 
     public void run(Runnable r, int delay) {
         getServer().getScheduler().runTaskLater(this, r, delay);
+    }
+
+    public static ScheduledExecutorService executor() {
+        return async;
+    }
+
+    public static class AwaitHaltLoop extends BukkitRunnable {
+
+        private final Main plugin;
+        private int cnt;
+
+        AwaitHaltLoop(Main plugin) {
+            this.plugin = plugin;
+        }
+
+        @Override
+        public void run() {
+            cnt++;
+            if (cnt >= 60 || Bukkit.getOnlinePlayers().isEmpty()) {
+                cancel();
+                plugin.shutdown();
+                return;
+            }
+            plugin.kickAll();
+        }
     }
 
 }
