@@ -7,6 +7,7 @@ import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
 import com.mengcraft.reload.command.at.CommandEvery;
+import com.mengcraft.reload.command.curl.CommandCurl;
 import com.mengcraft.reload.variable.TimeVariable;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
@@ -134,11 +135,14 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "async", "async.use",this::async);
         PluginHelper.addExecutor(this, "rconnect", "rconnect.use", new CommandConnect());
         PluginHelper.addExecutor(this, "echo", "echo.use", new CommandEcho());
+        PluginHelper.addExecutor(this, "curl", "curl.use", new CommandCurl());
 
         config.getStringList("schedule").forEach(this::runCommand);
 
         // variables
-        new TimeVariable(this, "time").register();
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new TimeVariable(this, "time").register();
+        }
     }
 
     void shutdown0() {

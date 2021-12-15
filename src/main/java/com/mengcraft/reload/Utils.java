@@ -12,7 +12,7 @@ public class Utils {
         return l == null || l.isEmpty();
     }
 
-    public static <T> T pick(List<T> list, int index) {
+    public static <T> T take(List<T> list, int index) {
         if (list.size() > index) {
             return list.get(index);
         }

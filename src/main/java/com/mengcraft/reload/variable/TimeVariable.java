@@ -12,7 +12,7 @@ public class TimeVariable extends AbstractVariable {
 
     public TimeVariable(Plugin owner, String name) {
         super(owner, name);
-        addSubject("until", (player, params) -> until(params.get(1), Utils.pick(params, 2)));
+        addSubject("until", (player, params) -> until(params.get(1), Utils.take(params, 2)));
     }
 
     private String until(String s, String fmt) {
