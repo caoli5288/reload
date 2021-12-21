@@ -2,6 +2,8 @@ package com.mengcraft.reload;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.mengcraft.reload.citizens.HologramTrait;
+import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.at.CommandAt;
@@ -12,11 +14,15 @@ import com.mengcraft.reload.variable.TimeVariable;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import me.clip.placeholderapi.PlaceholderAPI;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -50,6 +56,7 @@ public class Main extends JavaPlugin {
     private Thread primary;
     private Future<?> bootstrapWatchdog;
     private boolean serverValid;
+    private static boolean papi;
 
     @Override
     public void onLoad() {
@@ -132,7 +139,7 @@ public class Main extends JavaPlugin {
             who.sendMessage(ChatColor.RED + "System shutdown...");
             shutdown0();
         });
-        PluginHelper.addExecutor(this, "async", "async.use",this::async);
+        PluginHelper.addExecutor(this, "async", "async.use", this::async);
         PluginHelper.addExecutor(this, "rconnect", "rconnect.use", new CommandConnect());
         PluginHelper.addExecutor(this, "echo", "echo.use", new CommandEcho());
         PluginHelper.addExecutor(this, "curl", "curl.use", new CommandCurl());
@@ -140,8 +147,18 @@ public class Main extends JavaPlugin {
         config.getStringList("schedule").forEach(this::runCommand);
 
         // variables
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+        PluginManager pm = Bukkit.getPluginManager();
+        if (pm.getPlugin("PlaceholderAPI") != null) {
+            papi = true;
             new TimeVariable(this, "time").register();
+        }
+        if (pm.getPlugin("Citizens") != null) {
+            CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(TermsTrait.class).withName("terms"));
+            try {
+                Class.forName("net.citizensnpcs.trait.HologramTrait");
+            } catch (ClassNotFoundException e) {
+                CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(HologramTrait.class));
+            }
         }
     }
 
@@ -279,6 +296,17 @@ public class Main extends JavaPlugin {
 
     public static ScheduledExecutorService executor() {
         return async;
+    }
+
+    public static String format(Player p, String s) {
+        if (p != null && papi) {
+            try {
+                return PlaceholderAPI.setPlaceholders(p, s);
+            } catch (Exception e) {
+                instance.getLogger().log(Level.WARNING, "format", e);
+            }
+        }
+        return ChatColor.translateAlternateColorCodes('&', s);
     }
 
     public static class AwaitHaltLoop extends BukkitRunnable {

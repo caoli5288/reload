@@ -3,4 +3,5 @@ main: com.mengcraft.reload.Main
 version: ${project.version}
 
 softdepend:
+  - Citizens
   - PlaceholderAPI
