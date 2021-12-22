@@ -6,8 +6,11 @@ import net.citizensnpcs.api.util.DataKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class TermsTrait extends Trait {
@@ -22,10 +25,24 @@ public class TermsTrait extends Trait {
     @Override
     public void load(DataKey key) {
         if (key.keyExists("from")) {
-            from = LocalDateTime.parse(key.getString("from"));
+            Object obj = key.getRaw("from");
+            if (obj instanceof Date) {
+                from = ((Date) obj).toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime();
+            } else {
+                from = LocalDateTime.parse(obj.toString());
+            }
         }
         if (key.keyExists("to")) {
-            to = LocalDateTime.parse(key.getString("to"));
+            Object obj = key.getRaw("to");
+            if (obj instanceof Date) {
+                to = ((Date) obj).toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime();
+            } else {
+                to = LocalDateTime.parse(obj.toString());
+            }
         }
     }
 
