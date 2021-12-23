@@ -43,3 +43,44 @@ Run expression in config.yml to known when to shutdown. If you want to disable i
 | online   | Current online-player count |
 | time     | Server run time by second   |
 | tps      | Latest 1 minute tps(0-20)   |
+
+## Citizens traits
+
+### Terms
+
+Spawn and remove npc automatic.
+
+```yaml
+npc:
+  '0':
+    traits:
+      terms:
+        # spawn time(inclusive, optional)
+        from: 2021-12-25T00:00
+        # remove time(exclusive, optional)
+        to: 2022-01-01T00:00
+```
+
+### Holograms
+
+Holograms with refresh time. 
+
+- FASTEST - 0.1 seconds.
+- FAST - 0.5 seconds
+- MEDIUM - 1 seconds
+- SLOW - 5 seconds
+- SLOWEST - 10 seconds.
+
+```yaml
+npc:
+  '0':
+    traits:
+      holograms:
+        direction: BOTTOM_UP
+        lineHeight: -1.0
+        lines:
+          '0': 第一行
+          '1': 第二行
+          '2': '%time_until_2021-12-24T00:00%'
+        refresh: SLOW
+```

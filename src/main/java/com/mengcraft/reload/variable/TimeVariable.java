@@ -19,7 +19,10 @@ public class TimeVariable extends AbstractVariable {
         LocalDateTime time = LocalDateTime.parse(s);
         long secs = LocalDateTime.now().until(time, ChronoUnit.SECONDS);
         if (secs > 86400) {
-            return "null";
+            return "";
+        }
+        if (secs < 0) {
+            return "0";
         }
         LocalTime t = LocalTime.ofSecondOfDay(secs);
         if (fmt == null) {

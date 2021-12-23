@@ -2,17 +2,18 @@ package com.mengcraft.reload.citizens;
 
 import com.mengcraft.reload.Main;
 import net.citizensnpcs.api.trait.Trait;
+import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+@TraitName("terms")
 public class TermsTrait extends Trait {
 
     private LocalDateTime from;

@@ -4,14 +4,18 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.mengcraft.reload.Main;
 import com.mengcraft.reload.Utils;
+import lombok.Getter;
+import lombok.Setter;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.event.NPCDespawnEvent;
+import net.citizensnpcs.api.exception.NPCLoadException;
 import net.citizensnpcs.api.npc.MemoryNPCDataStore;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.npc.NPCRegistry;
 import net.citizensnpcs.api.persistence.Persist;
 import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.trait.TraitName;
+import net.citizensnpcs.api.util.DataKey;
 import net.citizensnpcs.api.util.Messaging;
 import net.citizensnpcs.trait.ArmorStandTrait;
 import org.bukkit.ChatColor;
@@ -27,23 +31,26 @@ import java.util.List;
 /**
  * Persists a hologram attached to the NPC.
  */
-@TraitName("hologramtrait")
-public class HologramTrait extends Trait {
+@TraitName("holograms")
+public class HologramsTrait extends Trait {
 
+    private final List<NPC> lineHolograms = Lists.newArrayList();
+    @Persist
+    private final List<String> lines = Lists.newArrayList();
+    private final NPCRegistry registry = CitizensAPI.createAnonymousNPCRegistry(new MemoryNPCDataStore());
     private Location currentLoc;
     @Persist
     private HologramDirection direction = HologramDirection.BOTTOM_UP;
     private boolean lastNameplateVisible;
     @Persist
     private double lineHeight = -1;
-    private final List<NPC> lineHolograms = Lists.newArrayList();
-    @Persist
-    private final List<String> lines = Lists.newArrayList();
-    private NPC nameNPC;
-    private final NPCRegistry registry = CitizensAPI.createAnonymousNPCRegistry(new MemoryNPCDataStore());
+    @Getter
+    @Setter
+    private Refresh refresh = Refresh.SLOW;
+    private int ticks;
 
-    public HologramTrait() {
-        super("hologramtrait");
+    public HologramsTrait() {
+        super("holograms");
     }
 
     /**
@@ -95,6 +102,16 @@ public class HologramTrait extends Trait {
         return direction;
     }
 
+    /**
+     * @param direction The new direction
+     * @see #getDirection()
+     */
+    public void setDirection(HologramDirection direction) {
+        this.direction = direction;
+        onDespawn();
+        onSpawn();
+    }
+
     private double getEntityHeight() {
         return npc.getEntity().getHeight();
     }
@@ -119,6 +136,30 @@ public class HologramTrait extends Trait {
     }
 
     /**
+     * Sets the line height
+     *
+     * @param height The line height in blocks
+     * @see #getLineHeight()
+     */
+    public void setLineHeight(double height) {
+        lineHeight = height;
+        onDespawn();
+        onSpawn();
+    }
+
+    @Override
+    public void load(DataKey key) throws NPCLoadException {
+        if (key.keyExists("refresh")) {
+            refresh = Refresh.valueOf(key.getString("refresh"));
+        }
+    }
+
+    @Override
+    public void save(DataKey key) {
+        key.setString("refresh", refresh.name());
+    }
+
+    /**
      * @return the hologram lines, in bottom-up order
      */
     public List<String> getLines() {
@@ -130,19 +171,8 @@ public class HologramTrait extends Trait {
                 * (lines.size() + 1);
     }
 
-    /**
-     * Note: this is implementation-specific and may be removed at a later date.
-     */
-    public ArmorStand getNameEntity() {
-        return nameNPC != null && nameNPC.isSpawned() ? ((ArmorStand) nameNPC.getEntity()) : null;
-    }
-
     @Override
     public void onDespawn() {
-        if (nameNPC != null) {
-            nameNPC.destroy();
-            nameNPC = null;
-        }
         for (NPC npc : lineHolograms) {
             npc.destroy();
         }
@@ -161,9 +191,6 @@ public class HologramTrait extends Trait {
         lastNameplateVisible = Boolean
                 .parseBoolean(npc.data().<Object>get(NPC.NAMEPLATE_VISIBLE_METADATA, true).toString());
         currentLoc = npc.getStoredLocation();
-//        if (npc.requiresNameHologram() && lastNameplateVisible) {
-//            nameNPC = createHologram(npc.getFullName(), 0);
-//        }
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             lineHolograms.add(createHologram(Main.format(Utils.castPlayer(npc.getEntity()), line), getHeight(i)));
@@ -187,31 +214,20 @@ public class HologramTrait extends Trait {
             onDespawn();
             return;
         }
+        if (ticks++ % refresh.getValue() != 0) {// Call every ${updateTicks} ticks
+            return;
+        }
         if (currentLoc == null) {
             currentLoc = npc.getStoredLocation();
         }
         boolean nameplateVisible = Boolean
                 .parseBoolean(npc.data().<Object>get(NPC.NAMEPLATE_VISIBLE_METADATA, true).toString());
-//        if (npc.requiresNameHologram()) {
-//            if (nameNPC != null && !nameplateVisible) {
-//                nameNPC.destroy();
-//                nameNPC = null;
-//            } else if (nameNPC == null && nameplateVisible) {
-//                nameNPC = createHologram(npc.getFullName(), 0);
-//            }
-//        }
         boolean update = currentLoc.getWorld() != npc.getStoredLocation().getWorld()
                 || currentLoc.distance(npc.getStoredLocation()) >= 0.001 || lastNameplateVisible != nameplateVisible;
         lastNameplateVisible = nameplateVisible;
 
         if (update) {
             currentLoc = npc.getStoredLocation();
-        }
-        if (nameNPC != null && nameNPC.isSpawned()) {
-            if (update) {
-                nameNPC.teleport(currentLoc.clone().add(0, getEntityHeight(), 0), PlayerTeleportEvent.TeleportCause.PLUGIN);
-            }
-            nameNPC.setName(npc.getFullName());
         }
         for (int i = 0; i < lineHolograms.size(); i++) {
             NPC hologramNPC = lineHolograms.get(i);
@@ -225,25 +241,15 @@ public class HologramTrait extends Trait {
                 Messaging.severe("More hologram NPCs than lines for ID", npc.getId(), "lines", lines);
                 break;
             }
-            String text = lines.get(i);
-            if (text != null && !ChatColor.stripColor(Main.format(Utils.castPlayer(npc.getEntity()), text)).isEmpty()) {
-                hologramNPC.setName(Main.format(Utils.castPlayer(npc.getEntity()), text));
+            String s = Main.format(Utils.castPlayer(npc.getEntity()), lines.get(i));
+            if (s != null && !ChatColor.stripColor(s).isEmpty()) {
+                hologramNPC.setName(s);
                 hologramNPC.data().set(NPC.NAMEPLATE_VISIBLE_METADATA, true);
             } else {
                 hologramNPC.setName("");
                 hologramNPC.data().set(NPC.NAMEPLATE_VISIBLE_METADATA, false);
             }
         }
-    }
-
-    /**
-     * @param direction The new direction
-     * @see #getDirection()
-     */
-    public void setDirection(HologramDirection direction) {
-        this.direction = direction;
-        onDespawn();
-        onSpawn();
     }
 
     /**
@@ -266,20 +272,26 @@ public class HologramTrait extends Trait {
         onSpawn();
     }
 
-    /**
-     * Sets the line height
-     *
-     * @param height The line height in blocks
-     * @see #getLineHeight()
-     */
-    public void setLineHeight(double height) {
-        lineHeight = height;
-        onDespawn();
-        onSpawn();
-    }
-
     public enum HologramDirection {
         BOTTOM_UP,
         TOP_DOWN;
+    }
+
+    public enum Refresh {
+        FASTEST(2),
+        FAST(10),
+        MEDIUM(20),
+        SLOW(100),
+        SLOWEST(200);
+
+        private final int value;
+
+        Refresh(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
     }
 }

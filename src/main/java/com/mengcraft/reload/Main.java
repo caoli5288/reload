@@ -2,7 +2,7 @@ package com.mengcraft.reload;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.mengcraft.reload.citizens.HologramTrait;
+import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandEcho;
@@ -153,11 +153,12 @@ public class Main extends JavaPlugin {
             new TimeVariable(this, "time").register();
         }
         if (pm.getPlugin("Citizens") != null) {
-            CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(TermsTrait.class).withName("terms"));
+            CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(TermsTrait.class));
+            CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(HologramsTrait.class));
             try {
                 Class.forName("net.citizensnpcs.trait.HologramTrait");
             } catch (ClassNotFoundException e) {
-                CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(HologramTrait.class));
+                CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
             }
         }
     }
@@ -299,6 +300,9 @@ public class Main extends JavaPlugin {
     }
 
     public static String format(Player p, String s) {
+        if (Utils.isNullOrEmpty(s)) {
+            return s;
+        }
         if (p != null && papi) {
             try {
                 return PlaceholderAPI.setPlaceholders(p, s);
