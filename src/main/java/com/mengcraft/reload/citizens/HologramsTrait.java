@@ -7,6 +7,7 @@ import com.mengcraft.reload.Utils;
 import lombok.Getter;
 import lombok.Setter;
 import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.event.DespawnReason;
 import net.citizensnpcs.api.event.NPCDespawnEvent;
 import net.citizensnpcs.api.exception.NPCLoadException;
 import net.citizensnpcs.api.npc.MemoryNPCDataStore;
@@ -73,8 +74,8 @@ public class HologramsTrait extends Trait {
     }
 
     @EventHandler
-    public void onDespawn(NPCDespawnEvent event) {
-        if (npc == event.getNPC()) {
+    public void onReload(NPCDespawnEvent event) {
+        if (npc == event.getNPC() && event.getReason() == DespawnReason.RELOAD) {
             onDespawn();
         }
     }
