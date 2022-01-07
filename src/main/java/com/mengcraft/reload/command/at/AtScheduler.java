@@ -9,6 +9,7 @@ import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -35,7 +36,12 @@ public enum AtScheduler {
     }
 
     public void at(CommandSender who, String label, String commands) {
-        val runner = new Runner(toTimeAt(label), -1, commands);
+        LocalDateTime at = toTimeAt(label);
+        if (at == null) {
+            who.sendMessage(String.format("Cannot schedule task at %s", label));
+            return;
+        }
+        val runner = new Runner(at, -1, commands);
         runner.future = Main.executor().schedule(() -> Main.getInstance().runCommand(runner.run), runner.until(), TimeUnit.MILLISECONDS);
         runner.desc = DATE_FORMAT.format(new Date()) + " -> at " + label + " " + runner.run;
         scheduler.put(++nextId, runner);
@@ -43,6 +49,7 @@ public enum AtScheduler {
         who.sendMessage(nextId + " " + runner.desc);
     }
 
+    @Nullable
     static LocalDateTime toTimeAt(String input) {
         try {
             LocalTime clock = LocalTime.parse(input);
@@ -58,7 +65,7 @@ public enum AtScheduler {
         try {
             LocalDateTime next = LocalDateTime.parse(input);
             if (!next.isAfter(LocalDateTime.now())) {
-                throw new IllegalArgumentException("invalid datetime" + input);
+                return null;
             }
             return next;
         } catch (DateTimeParseException ign) {
@@ -70,7 +77,7 @@ public enum AtScheduler {
             return LocalDateTime.now().plus(Long.parseLong(input.substring(1, input.length() - 1)) * unit, ChronoUnit.MILLIS);
         }
 
-        throw new IllegalArgumentException("syntax err " + input);
+        return null;
     }
 
     public void every(CommandSender who, String label, String commands) {
