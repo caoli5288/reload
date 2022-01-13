@@ -18,7 +18,10 @@ import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import net.citizensnpcs.api.util.Messaging;
+import net.citizensnpcs.nms.v1_8_R3.util.NMSImpl;
 import net.citizensnpcs.trait.ArmorStandTrait;
+import net.citizensnpcs.util.BoundingBox;
+import net.citizensnpcs.util.NMS;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
@@ -114,7 +117,8 @@ public class HologramsTrait extends Trait {
     }
 
     private double getEntityHeight() {
-        return npc.getEntity().getHeight();
+        BoundingBox box = NMS.getBoundingBox(npc.getEntity());
+        return box.maxY - box.minY;
     }
 
     private double getHeight(int lineNumber) {
