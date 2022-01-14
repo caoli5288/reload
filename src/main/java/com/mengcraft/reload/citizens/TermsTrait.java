@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @TraitName("terms")
-public class TermsTrait extends Trait {
+public class TermsTrait extends Trait implements ITrait {
 
     private LocalDateTime from;
     private LocalDateTime to;
@@ -76,5 +76,9 @@ public class TermsTrait extends Trait {
                 Bukkit.getScheduler().runTask(Main.getInstance(), () -> npc.despawn());
             }
         }
+    }
+
+    @Override
+    public void onReload() {
     }
 }

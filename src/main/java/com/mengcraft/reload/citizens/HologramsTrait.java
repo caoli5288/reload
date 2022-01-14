@@ -7,8 +7,6 @@ import com.mengcraft.reload.Utils;
 import lombok.Getter;
 import lombok.Setter;
 import net.citizensnpcs.api.CitizensAPI;
-import net.citizensnpcs.api.event.DespawnReason;
-import net.citizensnpcs.api.event.NPCDespawnEvent;
 import net.citizensnpcs.api.exception.NPCLoadException;
 import net.citizensnpcs.api.npc.MemoryNPCDataStore;
 import net.citizensnpcs.api.npc.NPC;
@@ -18,7 +16,6 @@ import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import net.citizensnpcs.api.util.Messaging;
-import net.citizensnpcs.nms.v1_8_R3.util.NMSImpl;
 import net.citizensnpcs.trait.ArmorStandTrait;
 import net.citizensnpcs.util.BoundingBox;
 import net.citizensnpcs.util.NMS;
@@ -26,7 +23,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.Collection;
@@ -36,7 +32,7 @@ import java.util.List;
  * Persists a hologram attached to the NPC.
  */
 @TraitName("holograms")
-public class HologramsTrait extends Trait {
+public class HologramsTrait extends Trait implements ITrait {
 
     private final List<NPC> lineHolograms = Lists.newArrayList();
     @Persist
@@ -76,11 +72,9 @@ public class HologramsTrait extends Trait {
         lines.clear();
     }
 
-    @EventHandler
-    public void onReload(NPCDespawnEvent event) {
-        if (npc == event.getNPC() && event.getReason() == DespawnReason.RELOAD) {
-            onDespawn();
-        }
+    @Override
+    public void onReload() {
+        onDespawn();
     }
 
     private NPC createHologram(String line, double heightOffset) {
@@ -182,6 +176,7 @@ public class HologramsTrait extends Trait {
             npc.destroy();
         }
         lineHolograms.clear();
+        CitizensService.unregister(npc.getUniqueId());
     }
 
     @Override
@@ -191,6 +186,7 @@ public class HologramsTrait extends Trait {
 
     @Override
     public void onSpawn() {
+        CitizensService.register(npc.getUniqueId(), this);
         if (!npc.isSpawned())
             return;
         lastNameplateVisible = Boolean

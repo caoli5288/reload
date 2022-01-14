@@ -2,6 +2,7 @@ package com.mengcraft.reload;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.mengcraft.reload.citizens.CitizensService;
 import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandConnect;
@@ -160,6 +161,7 @@ public class Main extends JavaPlugin {
             } catch (ClassNotFoundException e) {
                 CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
             }
+            pm.registerEvents(CitizensService.getService(), this);
         }
     }
 
