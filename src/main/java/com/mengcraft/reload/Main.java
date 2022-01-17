@@ -155,7 +155,9 @@ public class Main extends JavaPlugin {
         }
         if (pm.getPlugin("Citizens") != null) {
             CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(TermsTrait.class));
-            CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(HologramsTrait.class));
+            TraitInfo info = TraitInfo.create(HologramsTrait.class);
+            CitizensAPI.getTraitFactory().deregisterTrait(info);// force resolve conflicts
+            CitizensAPI.getTraitFactory().registerTrait(info);
             try {
                 Class.forName("net.citizensnpcs.trait.HologramTrait");
             } catch (ClassNotFoundException e) {

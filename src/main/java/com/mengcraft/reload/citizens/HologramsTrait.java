@@ -40,7 +40,7 @@ public class HologramsTrait extends Trait implements ITrait {
     private final NPCRegistry registry = CitizensAPI.createAnonymousNPCRegistry(new MemoryNPCDataStore());
     private Location currentLoc;
     @Persist
-    private HologramDirection direction = HologramDirection.BOTTOM_UP;
+    private HologramDirection direction = HologramDirection.TOP_DOWN;
     private boolean lastNameplateVisible;
     @Persist
     private double lineHeight = -1;

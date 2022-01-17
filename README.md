@@ -76,11 +76,14 @@ npc:
   '0':
     traits:
       holograms:
-        direction: BOTTOM_UP
+        # BOTTOM_UP or TOP_DOWN, default to TOP_DOWN
+        direction: TOP_DOWN
+        # default to -1
         lineHeight: -1.0
         lines:
           '0': 第一行
           '1': 第二行
           '2': '%time_until_2021-12-24T00:00%'
+        # default to SLOW
         refresh: SLOW
 ```

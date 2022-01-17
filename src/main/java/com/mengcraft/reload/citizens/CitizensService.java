@@ -1,7 +1,6 @@
 package com.mengcraft.reload.citizens;
 
 import com.google.common.collect.Maps;
-import net.citizensnpcs.api.event.DespawnReason;
 import net.citizensnpcs.api.event.NPCDespawnEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,7 +16,7 @@ public class CitizensService implements Listener {
 
     @EventHandler
     public void onReload(NPCDespawnEvent event) {
-        if (event.getReason() == DespawnReason.RELOAD) {
+        if (event.getReason().name().equals("RELOAD")) {
             ITrait trait = map.get(event.getNPC().getUniqueId());
             if (trait != null) {
                 trait.onReload();
