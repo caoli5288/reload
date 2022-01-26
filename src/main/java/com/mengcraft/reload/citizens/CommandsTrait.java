@@ -32,10 +32,12 @@ public class CommandsTrait extends Trait implements ITrait {
         cd = key.keyExists("cd") ?
                 key.getInt("cd") :
                 500;
-        cdMap = CacheBuilder.newBuilder()
-                .expireAfterWrite(Math.max(0, cd), TimeUnit.MILLISECONDS)
-                .<UUID, String>build()
-                .asMap();
+        if (cd > 0) {
+            cdMap = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cd, TimeUnit.MILLISECONDS)
+                    .<UUID, String>build()
+                    .asMap();
+        }
     }
 
     @Override
@@ -50,15 +52,23 @@ public class CommandsTrait extends Trait implements ITrait {
 
     @Override
     public void onClick(Player p) {
-        UUID uuid = p.getUniqueId();
-        if (cdMap.containsKey(uuid)) {
+        if (cd(p.getUniqueId())) {
             return;
         }
-        cdMap.put(uuid, "");
         ConsoleCommandSender console = Bukkit.getConsoleSender();
         for (String s : commands) {
             Bukkit.dispatchCommand(console, Main.format(p, s));
         }
+    }
+
+    private boolean cd(UUID uuid) {
+        if (cdMap != null) {
+            if (cdMap.containsKey(uuid)) {
+                return true;
+            }
+            cdMap.put(uuid, "");
+        }
+        return false;
     }
 
     public List<String> getCommands() {
