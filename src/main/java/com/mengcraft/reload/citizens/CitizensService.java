@@ -2,6 +2,8 @@ package com.mengcraft.reload.citizens;
 
 import com.google.common.collect.Maps;
 import net.citizensnpcs.api.event.NPCDespawnEvent;
+import net.citizensnpcs.api.event.NPCLeftClickEvent;
+import net.citizensnpcs.api.event.NPCRightClickEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -21,6 +23,22 @@ public class CitizensService implements Listener {
             if (trait != null) {
                 trait.onReload();
             }
+        }
+    }
+
+    @EventHandler
+    public void onClick(NPCLeftClickEvent event) {
+        ITrait trait = map.get(event.getNPC().getUniqueId());
+        if (trait != null) {
+            trait.onClick(event.getClicker());
+        }
+    }
+
+    @EventHandler
+    public void onClick(NPCRightClickEvent event) {
+        ITrait trait = map.get(event.getNPC().getUniqueId());
+        if (trait != null) {
+            trait.onClick(event.getClicker());
         }
     }
 

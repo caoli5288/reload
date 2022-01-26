@@ -3,6 +3,7 @@ package com.mengcraft.reload;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.mengcraft.reload.citizens.CitizensService;
+import com.mengcraft.reload.citizens.CommandsTrait;
 import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandConnect;
@@ -17,6 +18,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.trait.TraitFactory;
 import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -154,14 +156,18 @@ public class Main extends JavaPlugin {
             new TimeVariable(this, "time").register();
         }
         if (pm.getPlugin("Citizens") != null) {
-            CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(TermsTrait.class));
+            TraitFactory tf = CitizensAPI.getTraitFactory();
+            tf.registerTrait(TraitInfo.create(TermsTrait.class));
+            TraitInfo commands = TraitInfo.create(CommandsTrait.class);
+            tf.deregisterTrait(commands);// force resolve conflicts
+            tf.registerTrait(commands);
             TraitInfo info = TraitInfo.create(HologramsTrait.class);
-            CitizensAPI.getTraitFactory().deregisterTrait(info);// force resolve conflicts
-            CitizensAPI.getTraitFactory().registerTrait(info);
+            tf.deregisterTrait(info);
+            tf.registerTrait(info);
             try {
                 Class.forName("net.citizensnpcs.trait.HologramTrait");
             } catch (ClassNotFoundException e) {
-                CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
+                tf.registerTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
             }
             pm.registerEvents(CitizensService.getService(), this);
         }

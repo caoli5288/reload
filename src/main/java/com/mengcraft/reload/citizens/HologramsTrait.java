@@ -23,6 +23,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.Collection;
@@ -75,6 +76,11 @@ public class HologramsTrait extends Trait implements ITrait {
     @Override
     public void onReload() {
         onDespawn();
+    }
+
+    @Override
+    public void onClick(Player p) {
+
     }
 
     private NPC createHologram(String line, double heightOffset) {

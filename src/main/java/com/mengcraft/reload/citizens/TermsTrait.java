@@ -6,6 +6,7 @@ import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -80,5 +81,9 @@ public class TermsTrait extends Trait implements ITrait {
 
     @Override
     public void onReload() {
+    }
+
+    @Override
+    public void onClick(Player p) {
     }
 }
