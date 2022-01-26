@@ -23,7 +23,7 @@ public class CommandsTrait extends Trait implements ITrait {
     private Map<UUID, String> cdMap;
     private int cd;
 
-    protected CommandsTrait() {
+    public CommandsTrait() {
         super("commands");
     }
 
@@ -50,11 +50,14 @@ public class CommandsTrait extends Trait implements ITrait {
 
     @Override
     public void onClick(Player p) {
-        if (cdMap.put(p.getUniqueId(), "") == null) {
-            ConsoleCommandSender console = Bukkit.getConsoleSender();
-            for (String s : commands) {
-                Bukkit.dispatchCommand(console, Main.format(p, s));
-            }
+        UUID uuid = p.getUniqueId();
+        if (cdMap.containsKey(uuid)) {
+            return;
+        }
+        cdMap.put(uuid, "");
+        ConsoleCommandSender console = Bukkit.getConsoleSender();
+        for (String s : commands) {
+            Bukkit.dispatchCommand(console, Main.format(p, s));
         }
     }
 
