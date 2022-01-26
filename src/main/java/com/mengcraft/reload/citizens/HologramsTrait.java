@@ -23,7 +23,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.Collection;
@@ -33,7 +32,7 @@ import java.util.List;
  * Persists a hologram attached to the NPC.
  */
 @TraitName("holograms")
-public class HologramsTrait extends Trait implements ITrait {
+public class HologramsTrait extends Trait implements IReloadable {
 
     private final List<NPC> lineHolograms = Lists.newArrayList();
     @Persist
@@ -76,11 +75,6 @@ public class HologramsTrait extends Trait implements ITrait {
     @Override
     public void onReload() {
         onDespawn();
-    }
-
-    @Override
-    public void onClick(Player p) {
-
     }
 
     private NPC createHologram(String line, double heightOffset) {
@@ -182,7 +176,6 @@ public class HologramsTrait extends Trait implements ITrait {
             npc.destroy();
         }
         lineHolograms.clear();
-        CitizensService.unregister(npc.getUniqueId());
     }
 
     @Override
@@ -192,7 +185,6 @@ public class HologramsTrait extends Trait implements ITrait {
 
     @Override
     public void onSpawn() {
-        CitizensService.register(npc.getUniqueId(), this);
         if (!npc.isSpawned())
             return;
         lastNameplateVisible = Boolean

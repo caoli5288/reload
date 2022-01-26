@@ -1,6 +1,7 @@
 package com.mengcraft.reload.citizens;
 
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 import com.mengcraft.reload.Main;
 import net.citizensnpcs.api.persistence.Persist;
 import net.citizensnpcs.api.trait.Trait;
@@ -9,19 +10,25 @@ import net.citizensnpcs.api.util.DataKey;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 @TraitName("commands")
-public class CommandsTrait extends Trait implements ITrait {
+public class CommandsTrait extends Trait implements IClickable {
 
     @Persist
-    private List<String> commands;
-    private Map<UUID, String> cdMap;
+    @NotNull
+    private List<String> commands = Lists.newArrayList();
+    @Persist
+    @NotNull
+    private Mode mode = Mode.CONSOLE;
     private int cd;
+    private Map<UUID, String> cdMap;
 
     public CommandsTrait() {
         super("commands");
@@ -29,15 +36,9 @@ public class CommandsTrait extends Trait implements ITrait {
 
     @Override
     public void load(DataKey key) {
-        cd = key.keyExists("cd") ?
+        setCd(key.keyExists("cd") ?
                 key.getInt("cd") :
-                500;
-        if (cd > 0) {
-            cdMap = CacheBuilder.newBuilder()
-                    .expireAfterWrite(cd, TimeUnit.MILLISECONDS)
-                    .<UUID, String>build()
-                    .asMap();
-        }
+                500);
     }
 
     @Override
@@ -46,23 +47,15 @@ public class CommandsTrait extends Trait implements ITrait {
     }
 
     @Override
-    public void onReload() {
-        onDespawn();
-    }
-
-    @Override
     public void onClick(Player p) {
         if (cd(p.getUniqueId())) {
             return;
         }
-        ConsoleCommandSender console = Bukkit.getConsoleSender();
-        for (String s : commands) {
-            Bukkit.dispatchCommand(console, Main.format(p, s));
-        }
+        mode.accept(p, commands);
     }
 
     private boolean cd(UUID uuid) {
-        if (cdMap != null) {
+        if (cd > 0) {
             if (cdMap.containsKey(uuid)) {
                 return true;
             }
@@ -71,21 +64,62 @@ public class CommandsTrait extends Trait implements ITrait {
         return false;
     }
 
+    @NotNull
     public List<String> getCommands() {
         return commands;
     }
 
-    public void setCommands(List<String> commands) {
+    public void setCommands(@NotNull List<String> commands) {
         this.commands = commands;
     }
 
-    @Override
-    public void onSpawn() {
-        CitizensService.register(npc.getUniqueId(), this);
+    @NotNull
+    public Mode getMode() {
+        return mode;
     }
 
-    @Override
-    public void onDespawn() {
-        CitizensService.unregister(npc.getUniqueId());
+    public void setMode(@NotNull Mode mode) {
+        this.mode = mode;
+    }
+
+    public int getCd() {
+        return cd;
+    }
+
+    public void setCd(int cd) {
+        this.cd = cd;
+        if (cd > 0) {
+            cdMap = CacheBuilder.newBuilder()
+                    .expireAfterWrite(cd, TimeUnit.MILLISECONDS)
+                    .<UUID, String>build()
+                    .asMap();
+        }
+    }
+
+    public enum Mode implements BiConsumer<Player, List<String>> {
+
+        CONSOLE {
+            @Override
+            public void accept(Player p, List<String> cmd) {
+                ConsoleCommandSender console = Bukkit.getConsoleSender();
+                for (String s : cmd) {
+                    Bukkit.dispatchCommand(console, Main.format(p, s));
+                }
+            }
+        },
+
+        PLAYER {
+            @Override
+            public void accept(Player p, List<String> cmd) {
+                for (String s : cmd) {
+                    p.chat("/" + Main.format(p, s));
+                }
+            }
+        };
+
+        @Override
+        public void accept(Player p, List<String> cmd) {
+
+        }
     }
 }

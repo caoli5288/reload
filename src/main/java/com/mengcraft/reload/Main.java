@@ -2,7 +2,7 @@ package com.mengcraft.reload;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.mengcraft.reload.citizens.CitizensService;
+import com.mengcraft.reload.citizens.CitizensListeners;
 import com.mengcraft.reload.citizens.CommandsTrait;
 import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
@@ -169,7 +169,7 @@ public class Main extends JavaPlugin {
             } catch (ClassNotFoundException e) {
                 tf.registerTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
             }
-            pm.registerEvents(CitizensService.getService(), this);
+            pm.registerEvents(new CitizensListeners(), this);
         }
     }
 
@@ -313,11 +313,11 @@ public class Main extends JavaPlugin {
         if (Utils.isNullOrEmpty(s)) {
             return s;
         }
-        if (p != null && papi) {
-            try {
+        if (p != null) {
+            if (papi) {
                 return PlaceholderAPI.setPlaceholders(p, s);
-            } catch (Exception e) {
-                instance.getLogger().log(Level.WARNING, "format", e);
+            } else {
+                s = s.replace("%player_name%", p.getName());
             }
         }
         return ChatColor.translateAlternateColorCodes('&', s);

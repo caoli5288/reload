@@ -6,7 +6,6 @@ import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -15,7 +14,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @TraitName("terms")
-public class TermsTrait extends Trait implements ITrait {
+public class TermsTrait extends Trait {
 
     private LocalDateTime from;
     private LocalDateTime to;
@@ -77,13 +76,5 @@ public class TermsTrait extends Trait implements ITrait {
                 Bukkit.getScheduler().runTask(Main.getInstance(), () -> npc.despawn());
             }
         }
-    }
-
-    @Override
-    public void onReload() {
-    }
-
-    @Override
-    public void onClick(Player p) {
     }
 }

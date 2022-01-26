@@ -87,3 +87,18 @@ npc:
         # default to SLOW
         refresh: SLOW
 ```
+
+### Commands
+
+```yaml
+npc:
+  '0':
+    traits:
+      commands:
+        # Set to -1 to disable, default to 500ms.
+        cd: 500
+        # CONSOLE or PLAYER, default to CONSOLE
+        mode: CONSOLE
+        commands:
+          - say hello, %player_name%
+```

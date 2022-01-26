@@ -4,7 +4,7 @@
 
     <groupId>com.mengcraft</groupId>
     <artifactId>reload</artifactId>
-    <version>21.3-SNAPSHOT</version>
+    <version>22.1-SNAPSHOT</version>
 
     <name>Reload</name>
 
@@ -33,6 +33,10 @@
         <repository>
             <id>repo-i7mc</id>
             <url>https://repo.i7mc.com/maven2</url>
+        </repository>
+        <repository>
+            <id>repo-citizensnpcs</id>
+            <url>https://repo.citizensnpcs.co/</url>
         </repository>
     </repositories>
 

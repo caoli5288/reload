@@ -2,9 +2,7 @@ package com.mengcraft.reload.citizens;
 
 import org.bukkit.entity.Player;
 
-public interface ITrait {
+public interface IClickable {
 
-    void onReload();
-
-    void onClick(Player p);
+    void onClick(Player clicker);
 }
