@@ -24,7 +24,6 @@ public class CommandsTrait extends Trait implements IClickable {
     @Persist
     @NotNull
     private List<String> commands = Lists.newArrayList();
-    @Persist
     @NotNull
     private Mode mode = Mode.CONSOLE;
     private int cd;
@@ -39,11 +38,13 @@ public class CommandsTrait extends Trait implements IClickable {
         setCd(key.keyExists("cd") ?
                 key.getInt("cd") :
                 500);
+        setMode(Mode.valueOf(key.getString("mode", Mode.CONSOLE.name())));
     }
 
     @Override
     public void save(DataKey key) {
         key.setInt("cd", cd);
+        key.setString("mode", mode.name());
     }
 
     @Override
