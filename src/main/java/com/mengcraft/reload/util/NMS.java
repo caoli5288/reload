@@ -4,13 +4,15 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 public class NMS {
 
+    private MethodHandle mServer$isRunning;
     private Object mServer;
-    private Method mServer$isRunning;
     @Getter
     private boolean enable;
 
@@ -20,9 +22,11 @@ public class NMS {
             Field f = server.getClass().getDeclaredField("console");
             f.setAccessible(true);
             mServer = f.get(server);// MinecraftServer
-            mServer$isRunning = mServer.getClass().getDeclaredMethod("isRunning");
-            mServer$isRunning.setAccessible(true);
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            mServer$isRunning = lookup.findVirtual(mServer.getClass(), "isRunning", MethodType.methodType(boolean.class));
             enable = true;
+            // tests
+            mServer$isRunning();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -32,7 +36,7 @@ public class NMS {
         if (enable) {
             try {
                 return (boolean) mServer$isRunning.invoke(mServer);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }
