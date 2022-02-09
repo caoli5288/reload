@@ -12,6 +12,7 @@ import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
 import com.mengcraft.reload.command.at.CommandEvery;
 import com.mengcraft.reload.command.curl.CommandCurl;
+import com.mengcraft.reload.util.NMS;
 import com.mengcraft.reload.variable.TimeVariable;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
@@ -60,10 +61,13 @@ public class Main extends JavaPlugin {
     private Future<?> bootstrapWatchdog;
     private boolean serverValid;
     private static boolean papi;
+    @Getter
+    private static NMS nms;
 
     @Override
     public void onLoad() {
         instance = this;
+        nms = new NMS();
         primary = Thread.currentThread();
         async = Executors.newSingleThreadScheduledExecutor();
         saveDefaultConfig();
@@ -115,11 +119,8 @@ public class Main extends JavaPlugin {
         serverValid = config.getBoolean("valid_server_alive", true);
         async.scheduleAtFixedRate(() -> {
             ticker.update();
-            if (serverValid && ticker.getShort() < 1) {
+            if (serverValid && ticker.getShort() < 1 && nms.mServer$isRunning()) {
                 getLogger().log(Level.SEVERE, "TPS < 1, preparing kill server");
-                for (StackTraceElement element : primary.getStackTrace()) {
-                    getLogger().warning("\tat " + element);
-                }
                 if (config.getBoolean("extension.auto_dump")) {
                     dump();
                 }
