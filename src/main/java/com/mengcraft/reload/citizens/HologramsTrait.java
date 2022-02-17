@@ -17,8 +17,6 @@ import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import net.citizensnpcs.api.util.Messaging;
 import net.citizensnpcs.trait.ArmorStandTrait;
-import net.citizensnpcs.util.BoundingBox;
-import net.citizensnpcs.util.NMS;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
@@ -44,6 +42,8 @@ public class HologramsTrait extends Trait implements IReloadable {
     private boolean lastNameplateVisible;
     @Persist
     private double lineHeight = -1;
+    @Persist
+    private double offset = 1.8;
     @Getter
     @Setter
     private Refresh refresh = Refresh.SLOW;
@@ -87,7 +87,7 @@ public class HologramsTrait extends Trait implements IReloadable {
         trait.setHasArms(false);
         trait.setHasBaseplate(false);
         hologramNPC.spawn(currentLoc.clone().add(0,
-                getEntityHeight()
+                offset
                         + (direction == HologramDirection.BOTTOM_UP ? heightOffset : getMaxHeight() - heightOffset),
                 0));
         return hologramNPC;
@@ -108,11 +108,6 @@ public class HologramsTrait extends Trait implements IReloadable {
         this.direction = direction;
         onDespawn();
         onSpawn();
-    }
-
-    private double getEntityHeight() {
-        BoundingBox box = NMS.getBoundingBox(npc.getEntity());
-        return box.maxY - box.minY;
     }
 
     private double getHeight(int lineNumber) {
@@ -233,7 +228,7 @@ public class HologramsTrait extends Trait implements IReloadable {
             if (!hologramNPC.isSpawned())
                 continue;
             if (update) {
-                hologramNPC.teleport(currentLoc.clone().add(0, getEntityHeight() + getHeight(i), 0),
+                hologramNPC.teleport(currentLoc.clone().add(0, offset + getHeight(i), 0),
                         PlayerTeleportEvent.TeleportCause.PLUGIN);
             }
             if (i >= lines.size()) {
@@ -267,6 +262,16 @@ public class HologramsTrait extends Trait implements IReloadable {
                 return;
             }
         }
+        onDespawn();
+        onSpawn();
+    }
+
+    public double getOffset() {
+        return offset;
+    }
+
+    public void setOffset(double offset) {
+        this.offset = offset;
         onDespawn();
         onSpawn();
     }
