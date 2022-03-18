@@ -2,8 +2,8 @@ control:
   expr: "(${time} > 36000 && ${online} < 1)"
   enable: false
 # Wait for server bootstrapped in seconds and start TPS tracker.
-wait: 15
-force_wait: 120
+wait: 30
+force_wait: 300
 kick_to:
   - "lobby-1"
 schedule:
@@ -14,6 +14,6 @@ message:
 valid_sqlite: false
 valid_server_alive: true
 extension:
-  auto_dump: true
+  auto_dump: false
 bootstrap_watchdog: 600
 stop_command: stop
