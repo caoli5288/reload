@@ -13,6 +13,7 @@ import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
 import com.mengcraft.reload.command.at.CommandEvery;
 import com.mengcraft.reload.command.curl.CommandCurl;
+import com.mengcraft.reload.util.AdvanceTilesMechanism;
 import com.mengcraft.reload.util.NMS;
 import com.mengcraft.reload.variable.TimeVariable;
 import com.sun.management.HotSpotDiagnosticMXBean;
@@ -64,10 +65,18 @@ public class Main extends JavaPlugin {
     private static boolean papi;
     @Getter
     private static NMS nms;
+    @Getter
+    private static boolean spigot;
 
     @Override
     public void onLoad() {
         instance = this;
+        try {
+            Class.forName("org.spigotmc.SpigotConfig");
+            spigot = true;
+        } catch (ClassNotFoundException e) {
+            // ignore
+        }
         nms = new NMS();
         primary = Thread.currentThread();
         async = Executors.newSingleThreadScheduledExecutor();
@@ -92,6 +101,10 @@ public class Main extends JavaPlugin {
                 shutdown(false);
                 return;
             }
+        }
+
+        if (spigot && config.getBoolean("extension.advance_tiles_mechanism")) {
+            Bukkit.getScheduler().runTaskTimer(this, new AdvanceTilesMechanism(), 1200, 1200);// Update per min
         }
 
         if (bootstrapWatchdog != null) {
