@@ -34,8 +34,8 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 Run expression in config.yml to known when to shutdown. If you want to disable it, set it to null or empty string. 
 
 ### Expression variable
-| variable | description |
-|----------|-------------|
+| variable | description                 |
+|----------|-----------------------------|
 | flow     | Count player join and quit  |
 | join     | Count player joined         |
 | login    | Count player try login      |

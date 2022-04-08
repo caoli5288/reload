@@ -104,6 +104,7 @@ public class Main extends JavaPlugin {
         }
 
         if (spigot && config.getBoolean("extension.advance_tiles_mechanism")) {
+            getLogger().info("Use advance tiles mechanism");
             Bukkit.getScheduler().runTaskTimer(this, new AdvanceTilesMechanism(), 1200, 1200);// Update per min
         }
 
@@ -260,7 +261,7 @@ public class Main extends JavaPlugin {
                 b.start();
             }
         } else {
-            async.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 120), TimeUnit.SECONDS);
+            async.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 300), TimeUnit.SECONDS);
             // Try common way first
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), getConfig().getString("stop_command", "stop"));
         }

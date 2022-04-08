@@ -29,12 +29,12 @@ public class AdvanceTilesMechanism implements Runnable {
                 handleGetter = method;
                 Class<?> clsWorld = handleGetter.getReturnType().getSuperclass();// nms.World
                 for (Field field : clsWorld.getFields()) {
-                    if (field.getName().equals("spigotConfig")) {
+                    if (field.getType() == SpigotWorldConfig.class) {
                         wcGetter = field;
+                        Bukkit.getLogger().info("[Tiles] Inject " + field);
+                        return;
                     }
-                    // TODO paper world config
                 }
-                return;
             }
         }
     }
@@ -45,14 +45,14 @@ public class AdvanceTilesMechanism implements Runnable {
         if (tps < 5) {// OMG
             // force reset to minimal bound
             for (World world : Bukkit.getWorlds()) {
-                SpigotWorldConfig sc = (SpigotWorldConfig) spigot(world);
+                SpigotWorldConfig sc = spigotConfig(world);
                 sc.hopperTransfer = HOPPER_TRANSFER_MAX;
                 sc.hopperCheck = HOPPER_TRANSFER_MAX / 3;
             }
         } else if (tps < 10) {
             // Server in heavy load
             for (World world : Bukkit.getWorlds()) {
-                SpigotWorldConfig sc = (SpigotWorldConfig) spigot(world);
+                SpigotWorldConfig sc = spigotConfig(world);
                 if (sc.hopperTransfer < HOPPER_TRANSFER_MAX) {
                     // adjust it
                     sc.hopperTransfer = Math.min(HOPPER_TRANSFER_MAX, sc.hopperTransfer + (sc.hopperTransfer / 10));
@@ -61,15 +61,16 @@ public class AdvanceTilesMechanism implements Runnable {
                     obj.put("world", world.getName());
                     obj.put("hopperTransfer", sc.hopperTransfer);
                     obj.put("hopperCheck", sc.hopperCheck);
-                    Bukkit.getLogger().info("[]," + obj.toJSONString());
+                    Bukkit.getLogger().info("[Tiles]," + obj.toJSONString());
                 }
+                // Paper
             }
         } else if (tps < 15) {
             // do nothing and wait
         } else {
             // Server in light load
             for (World world : Bukkit.getWorlds()) {
-                SpigotWorldConfig sc = (SpigotWorldConfig) spigot(world);
+                SpigotWorldConfig sc = spigotConfig(world);
                 if (sc.hopperTransfer > HOPPER_TRANSFER_MIN) {
                     // adjust it
                     sc.hopperTransfer = Math.max(HOPPER_TRANSFER_MAX, sc.hopperTransfer - (sc.hopperTransfer / 10));
@@ -78,15 +79,15 @@ public class AdvanceTilesMechanism implements Runnable {
                     obj.put("worldName", world.getName());
                     obj.put("hopperTransfer", sc.hopperTransfer);
                     obj.put("hopperCheck", sc.hopperCheck);
-                    Bukkit.getLogger().info("[]," + obj.toJSONString());
+                    Bukkit.getLogger().info("[Tiles]," + obj.toJSONString());
                 }
             }
         }
     }
 
     @SneakyThrows
-    Object spigot(World world) {
+    SpigotWorldConfig spigotConfig(World world) {
         Object nmsWorld = handleGetter.invoke(world);
-        return wcGetter.get(nmsWorld);
+        return (SpigotWorldConfig) wcGetter.get(nmsWorld);
     }
 }
