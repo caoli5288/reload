@@ -105,7 +105,7 @@ public class Main extends JavaPlugin {
 
         if (spigot && config.getBoolean("extension.advance_tiles_mechanism")) {
             getLogger().info("Use advance tiles mechanism");
-            Bukkit.getScheduler().runTaskTimer(this, new AdvanceTilesMechanism(), 1200, 1200);// Update per min
+            Bukkit.getScheduler().runTaskTimerAsynchronously(this, new AdvanceTilesMechanism(), 300, 300);// Update per 15s
         }
 
         if (bootstrapWatchdog != null) {
