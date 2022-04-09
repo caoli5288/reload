@@ -99,6 +99,18 @@ npc:
         cd: 500
         # CONSOLE or PLAYER, default to CONSOLE
         mode: CONSOLE
+        # Run anyway
         commands:
-          - say hello, %player_name%
+          '0': say hello, %player_name%
+        rules:
+          # Run if matches rules
+          '0':
+            if: '%player_has_permission_vip%'
+            cmd: |
+              give %player_name% stone
+              give %player_name% diamond_pickaxe
+            # Break pipeline if matched
+            continuous: false
+          '1':
+            cmd: title %player_name% actionbar You are not VIP
 ```
