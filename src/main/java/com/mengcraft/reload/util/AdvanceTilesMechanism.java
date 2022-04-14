@@ -59,9 +59,9 @@ public class AdvanceTilesMechanism implements Runnable {
             for (World world : Bukkit.getWorlds()) {
                 SpigotWorldConfig sc = spigotConfig(world);
                 // check if hopperTransfer is not minimal
-                if (sc.hopperTransfer > HOPPER_TRANSFER_MIN) {
+                if (sc.hopperTransfer != HOPPER_TRANSFER_MAX) {
                     sc.hopperTransfer = HOPPER_TRANSFER_MAX;
-                    sc.hopperCheck = HOPPER_TRANSFER_MAX / 3;
+                    sc.hopperCheck = HOPPER_TRANSFER_MAX / 8;
                     // log
                     JSONObject json = new JSONObject();
                     json.put("world", world.getName());
@@ -77,7 +77,7 @@ public class AdvanceTilesMechanism implements Runnable {
                 if (sc.hopperTransfer < HOPPER_TRANSFER_MAX) {
                     // adjust it
                     sc.hopperTransfer = Math.min(HOPPER_TRANSFER_MAX, sc.hopperTransfer + HOPPER_TRANSFER_MIN);
-                    sc.hopperCheck = sc.hopperTransfer / 3;
+                    sc.hopperCheck = sc.hopperTransfer / 8;
                     // log
                     JSONObject obj = new JSONObject();
                     obj.put("world", world.getName());
@@ -96,7 +96,7 @@ public class AdvanceTilesMechanism implements Runnable {
                 if (sc.hopperTransfer > HOPPER_TRANSFER_MIN) {
                     // adjust it
                     sc.hopperTransfer = Math.max(HOPPER_TRANSFER_MAX, sc.hopperTransfer - HOPPER_TRANSFER_MIN);
-                    sc.hopperCheck = sc.hopperTransfer / 3;
+                    sc.hopperCheck = sc.hopperTransfer / 8;
                     JSONObject obj = new JSONObject();
                     obj.put("world", world.getName());
                     obj.put("hopperTransfer", sc.hopperTransfer);

@@ -31,10 +31,6 @@
 
     <repositories>
         <repository>
-            <id>repo-i7mc</id>
-            <url>https://repo.i7mc.com/maven2</url>
-        </repository>
-        <repository>
             <id>repo-citizensnpcs</id>
             <url>https://repo.citizensnpcs.co/</url>
         </repository>
