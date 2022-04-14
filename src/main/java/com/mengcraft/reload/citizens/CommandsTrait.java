@@ -165,6 +165,8 @@ public class CommandsTrait extends Trait implements IClickable {
                 Object result = Utils.SCRIPT_ENGINE.eval(content);
                 if (result instanceof Boolean) {
                     return (boolean) result;
+                } else if (result instanceof Number) {
+                    return ((Number) result).doubleValue() != 0;
                 }
             } catch (ScriptException e) {
                 e.printStackTrace();
