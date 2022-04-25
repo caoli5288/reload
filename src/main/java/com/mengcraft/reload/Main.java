@@ -10,6 +10,7 @@ import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.CommandExit;
+import com.mengcraft.reload.command.CommandVelocity;
 import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
 import com.mengcraft.reload.command.at.CommandEvery;
@@ -164,6 +165,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "echo", "echo.use", new CommandEcho());
         PluginHelper.addExecutor(this, "curl", "curl.use", new CommandCurl());
         PluginHelper.addExecutor(this, "exit", "exit.use", new CommandExit());
+        PluginHelper.addExecutor(this, "velocity", "velocity.use", new CommandVelocity());
 
         config.getStringList("schedule").forEach(this::runCommand);
 

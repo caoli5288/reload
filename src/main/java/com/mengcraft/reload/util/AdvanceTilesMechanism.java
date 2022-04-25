@@ -95,7 +95,7 @@ public class AdvanceTilesMechanism implements Runnable {
                 SpigotWorldConfig sc = spigotConfig(world);
                 if (sc.hopperTransfer > HOPPER_TRANSFER_MIN) {
                     // adjust it
-                    sc.hopperTransfer = Math.max(HOPPER_TRANSFER_MAX, sc.hopperTransfer - HOPPER_TRANSFER_MIN);
+                    sc.hopperTransfer = Math.max(HOPPER_TRANSFER_MIN, sc.hopperTransfer - HOPPER_TRANSFER_MIN);
                     sc.hopperCheck = sc.hopperTransfer / 8;
                     JSONObject obj = new JSONObject();
                     obj.put("world", world.getName());
