@@ -2,24 +2,40 @@ package com.mengcraft.reload.citizens;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.ClassPath;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import net.citizensnpcs.api.event.NPCDespawnEvent;
 import net.citizensnpcs.api.event.NPCLeftClickEvent;
 import net.citizensnpcs.api.event.NPCRightClickEvent;
 import net.citizensnpcs.api.npc.NPC;
+import net.citizensnpcs.api.persistence.PersistenceLoader;
 import net.citizensnpcs.api.trait.Trait;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
-public class CitizensListeners implements Listener {
+import java.util.Map;
+import java.util.UUID;
 
+public class CitizensManager implements Listener {
+
+    private static final CitizensManager INSTANCE = new CitizensManager();
     private final Multimap<Class<?>, Class<Trait>> types = ArrayListMultimap.create();
+    @Getter
+    private final Map<UUID, NPC> hides = Maps.newHashMap();
+
+    static {
+        PersistenceLoader.registerPersistDelegate(Rule.class, Rule.class);
+    }
 
     @SneakyThrows
-    public CitizensListeners() {
-        ImmutableSet<ClassPath.ClassInfo> classes = ClassPath.from(CitizensListeners.class.getClassLoader())
+    public CitizensManager() {
+        ImmutableSet<ClassPath.ClassInfo> classes = ClassPath.from(CitizensManager.class.getClassLoader())
                 .getTopLevelClassesRecursive("com.mengcraft.reload.citizens");
         for (ClassPath.ClassInfo info : classes) {
             Class<?> cls = info.load();
@@ -66,5 +82,33 @@ public class CitizensListeners implements Listener {
                 ((IClickable) npc.getTrait(cls)).onClick(event.getClicker());
             }
         }
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        if (hides.isEmpty()) {
+            return;
+        }
+        Player p = event.getPlayer();
+        for (NPC npc : hides.values()) {
+            HideTrait trait = npc.getTrait(HideTrait.class);
+            trait.onJoinWorld(p);
+        }
+    }
+
+    @EventHandler
+    public void onChangeWorld(PlayerChangedWorldEvent event) {
+        if (hides.isEmpty()) {
+            return;
+        }
+        Player p = event.getPlayer();
+        for (NPC npc : hides.values()) {
+            HideTrait trait = npc.getTrait(HideTrait.class);
+            trait.onJoinWorld(p);
+        }
+    }
+
+    public static CitizensManager getInstance() {
+        return INSTANCE;
     }
 }

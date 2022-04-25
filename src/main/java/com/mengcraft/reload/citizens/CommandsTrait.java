@@ -4,10 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.mengcraft.reload.Main;
 import com.mengcraft.reload.Utils;
-import lombok.Data;
 import net.citizensnpcs.api.persistence.Persist;
-import net.citizensnpcs.api.persistence.PersistenceLoader;
-import net.citizensnpcs.api.persistence.Persister;
 import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
@@ -16,8 +13,6 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import javax.script.ScriptException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,10 +31,6 @@ public class CommandsTrait extends Trait implements IClickable {
     private Map<UUID, String> cdMap;
     @Persist
     private List<Rule> rules = Lists.newArrayList();
-
-    static {
-        PersistenceLoader.registerPersistDelegate(Rule.class, Rule.class);
-    }
 
     public CommandsTrait() {
         super("commands");
@@ -126,52 +117,6 @@ public class CommandsTrait extends Trait implements IClickable {
                     .expireAfterWrite(cd, TimeUnit.MILLISECONDS)
                     .<UUID, String>build()
                     .asMap();
-        }
-    }
-
-    @Data
-    public static class Rule implements Persister<Rule> {
-
-        private String ifScript;
-        private List<String> cmd;
-        private boolean continuous = true;
-
-        @Override
-        public Rule create(DataKey data) {
-            Rule rule = new Rule();
-            rule.ifScript = data.getString("if");
-            rule.cmd = Arrays.asList(data.getString("cmd").split("\n"));
-            rule.continuous = data.getBoolean("continuous", true);
-            return rule;
-        }
-
-        @Override
-        public void save(Rule rule, DataKey data) {
-            data.setString("if", rule.ifScript);
-            data.setString("cmd", String.join("\n", rule.cmd));
-            data.setBoolean("continuous", rule.continuous);
-        }
-
-        public boolean check(Player p) {
-            // if script is null or empty, always return true
-            if (Utils.isNullOrEmpty(ifScript)) {
-                return true;
-            }
-            String content = Main.format(p, ifScript);
-            if (Utils.isNullOrEmpty(content)) {
-                return false;
-            }
-            try {
-                Object result = Utils.SCRIPT_ENGINE.eval(content);
-                if (result instanceof Boolean) {
-                    return (boolean) result;
-                } else if (result instanceof Number) {
-                    return ((Number) result).doubleValue() != 0;
-                }
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            }
-            return false;
         }
     }
 

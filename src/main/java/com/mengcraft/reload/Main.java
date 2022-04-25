@@ -2,8 +2,9 @@ package com.mengcraft.reload;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.mengcraft.reload.citizens.CitizensListeners;
+import com.mengcraft.reload.citizens.CitizensManager;
 import com.mengcraft.reload.citizens.CommandsTrait;
+import com.mengcraft.reload.citizens.HideTrait;
 import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandConnect;
@@ -181,12 +182,15 @@ public class Main extends JavaPlugin {
             TraitInfo info = TraitInfo.create(HologramsTrait.class);
             tf.deregisterTrait(info);
             tf.registerTrait(info);
+            info = TraitInfo.create(HideTrait.class);
+            tf.deregisterTrait(info);
+            tf.registerTrait(info);
             try {
                 Class.forName("net.citizensnpcs.trait.HologramTrait");
             } catch (ClassNotFoundException e) {
                 tf.registerTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
             }
-            pm.registerEvents(new CitizensListeners(), this);
+            pm.registerEvents(CitizensManager.getInstance(), this);
         }
     }
 

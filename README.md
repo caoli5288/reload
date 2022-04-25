@@ -114,3 +114,21 @@ npc:
           '1':
             cmd: title %player_name% actionbar You are not VIP
 ```
+
+### Hide
+
+```yaml
+npc:
+  '0':
+    traits:
+      hide:
+        rules:
+          '0':
+            # Show NPC if matches rule, or check next if exists.
+            if: '%player_has_permission_<permissionName>%'
+            hide: false
+          '1':
+            # Hide NPC if matches rule, or show if rules end.
+            if: '!%player_has_permission_<permissionName2>%'
+            hide: true
+```
