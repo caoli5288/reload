@@ -30,6 +30,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -52,7 +56,7 @@ import java.util.logging.Level;
 /**
  * Created on 16-8-7.
  */
-public class Main extends JavaPlugin {
+public class Main extends JavaPlugin implements Listener {
 
     private static ScheduledExecutorService async;
     @Getter
@@ -199,12 +203,25 @@ public class Main extends JavaPlugin {
     void shutdown0() {
         if (!shutdown) {
             shutdown = true;
-            if (!Utils.isNullOrEmpty(kick)) {
+            if (Utils.isNullOrEmpty(kick)) {
                 shutdown();
-                return;
+            } else {
+                kickAll();
+                if (getConfig().getBoolean("extension.kick_fallback")) {
+                    shutdown();
+                } else {
+                    // ensure players kicked
+                    new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
+                    // reject new players
+                    Bukkit.getPluginManager().registerEvent(AsyncPlayerPreLoginEvent.class, this, EventPriority.NORMAL, this::reject0, this);
+                }
             }
-            new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
         }
+    }
+
+    private void reject0(Listener __, Event event) {
+        AsyncPlayerPreLoginEvent e = (AsyncPlayerPreLoginEvent) event;
+        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "Server is shutting down");
     }
 
     private void async(CommandSender sender, List<String> params) {
@@ -296,6 +313,10 @@ public class Main extends JavaPlugin {
         if (kick.isEmpty()) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 player.kickPlayer(getConfig().getString("message.notify"));
+            }
+        } else if (getConfig().getBoolean("extension.kick_fallback")) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                p.kickPlayer("fallback/" + nextKickTo());
             }
         } else {
             ByteArrayDataOutput buf = ByteStreams.newDataOutput();
