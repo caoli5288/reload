@@ -198,6 +198,11 @@ public class Main extends JavaPlugin implements Listener {
             }
             pm.registerEvents(CitizensManager.getInstance(), this);
         }
+
+        List<String> altChecker = getConfig().getStringList("commands_alt_checker");
+        if (!altChecker.isEmpty()) {
+            pm.registerEvents(new CommandsAltChecker(altChecker), this);
+        }
     }
 
     void shutdown0() {

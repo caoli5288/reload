@@ -44,6 +44,18 @@ Run expression in config.yml to known when to shutdown. If you want to disable i
 | time     | Server run time by second   |
 | tps      | Latest 1 minute tps(0-20)   |
 
+## Commands alt checker
+
+Enable commands alt checker by setting `commands_alt_checker` in config.yml. You must set the name of the command instead of the alias, and all aliases will be resolved automatically.
+
+```yaml
+commands_alt_checker:
+  # deny if player not has permission "command.help.use"
+  - "help"
+  - "plugins"
+  - "version"
+```
+
 ## Citizens traits
 
 ### Terms

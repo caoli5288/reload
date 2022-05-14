@@ -5,10 +5,10 @@ control:
 wait: 30
 force_wait: 300
 kick_to:
-  - "lobby-1"
+  - "lobby"
 schedule:
-- "at 12:30 say 大家中午好"
-- "every 18:00 say 大家下午好"
+  - "at 12:30 say 大家中午好"
+  - "every 18:00 say 大家下午好"
 message:
   notify: "&1为了服务器流畅，本大厅即将重启！请玩家前往其他大厅或等待自动传送至主大厅！"
 valid_sqlite: false
@@ -19,3 +19,7 @@ extension:
   kick_fallback: false
 bootstrap_watchdog: 600
 stop_command: stop
+commands_alt_checker:
+  - "help"
+  - "plugins"
+  - "version"
