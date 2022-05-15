@@ -7,9 +7,11 @@ import com.mengcraft.reload.citizens.CommandsTrait;
 import com.mengcraft.reload.citizens.HideTrait;
 import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
+import com.mengcraft.reload.command.CommandAlias;
 import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.CommandExit;
+import com.mengcraft.reload.command.CommandLag;
 import com.mengcraft.reload.command.CommandVelocity;
 import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
@@ -170,6 +172,8 @@ public class Main extends JavaPlugin implements Listener {
         PluginHelper.addExecutor(this, "curl", "curl.use", new CommandCurl());
         PluginHelper.addExecutor(this, "exit", "exit.use", new CommandExit());
         PluginHelper.addExecutor(this, "velocity", "velocity.use", new CommandVelocity());
+        PluginHelper.addExecutor(this, "alias", "alias.use", new CommandAlias());
+        PluginHelper.addExecutor(this, "lag", "lag.use", new CommandLag());
 
         config.getStringList("schedule").forEach(this::runCommand);
 

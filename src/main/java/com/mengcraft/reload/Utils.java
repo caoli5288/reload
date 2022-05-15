@@ -1,6 +1,10 @@
 package com.mengcraft.reload;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
+import org.bukkit.Bukkit;
+import org.bukkit.Server;
+import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -10,11 +14,14 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.lang.reflect.Field;
 import java.util.List;
 
 public class Utils {
 
     public static final ScriptEngine SCRIPT_ENGINE;
+    @Getter
+    private static CommandMap commandMap;
 
     static {
         SCRIPT_ENGINE = new ScriptEngineManager(Utils.class.getClassLoader())
@@ -23,6 +30,14 @@ public class Utils {
             // To compatible with some ecloud placeholders
             SCRIPT_ENGINE.eval("yes = true; no = false;");
         } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+        Server server = Bukkit.getServer();
+        try {
+            Field field = server.getClass().getDeclaredField("commandMap");
+            field.setAccessible(true);
+            commandMap = (CommandMap) field.get(server);
+        } catch (ReflectiveOperationException e) {
             e.printStackTrace();
         }
     }
