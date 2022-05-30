@@ -1,7 +1,6 @@
 package com.mengcraft.reload;
 
 import lombok.Getter;
-import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.CommandMap;
@@ -9,8 +8,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
-import javax.script.Bindings;
-import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -19,7 +16,7 @@ import java.util.List;
 
 public class Utils {
 
-    public static final ScriptEngine SCRIPT_ENGINE;
+    private static final ScriptEngine SCRIPT_ENGINE;
     @Getter
     private static CommandMap commandMap;
 
@@ -42,13 +39,6 @@ public class Utils {
         }
     }
 
-    @SneakyThrows
-    public static <T> T asInterface(Class<T> cls, String contents) {
-        Bindings bindings = SCRIPT_ENGINE.createBindings();
-        SCRIPT_ENGINE.eval(contents, bindings);
-        return ((Invocable) SCRIPT_ENGINE).getInterface(bindings, cls);
-    }
-
     public static boolean isNullOrEmpty(String s) {
         return s == null || s.isEmpty();
     }
@@ -69,5 +59,34 @@ public class Utils {
             return (Player) entity;
         }
         return null;
+    }
+
+    public static boolean asBoolean(String s) {
+        // check simple contents
+        switch (s) {
+            case "true":
+            case "yes":
+            case "1":
+                return true;
+            case "false":
+            case "no":
+            case "0":
+                return false;
+        }
+        try {
+            Object result = Utils.eval(s);
+            if (result instanceof Boolean) {
+                return (boolean) result;
+            } else if (result instanceof Number) {
+                return ((Number) result).doubleValue() != 0;
+            }
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static Object eval(String js) throws ScriptException {
+        return SCRIPT_ENGINE.eval(js);
     }
 }

@@ -46,16 +46,6 @@ public class Rule implements Persister<Rule> {
         if (Utils.isNullOrEmpty(content)) {
             return false;
         }
-        try {
-            Object result = Utils.SCRIPT_ENGINE.eval(content);
-            if (result instanceof Boolean) {
-                return (boolean) result;
-            } else if (result instanceof Number) {
-                return ((Number) result).doubleValue() != 0;
-            }
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        }
-        return false;
+        return Utils.asBoolean(content);
     }
 }
