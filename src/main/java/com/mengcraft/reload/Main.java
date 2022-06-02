@@ -42,11 +42,13 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.ProxySelector;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -95,6 +97,10 @@ public class Main extends JavaPlugin implements Listener {
         if (s > 0) {
             bootstrapWatchdog = async.schedule(() -> shutdown(true), s, TimeUnit.SECONDS);
             getLogger().info("Schedule bootstrap watchdog task");
+        }
+        List<Map<?, ?>> trafficRules = getConfig().getMapList("traffic_rules");
+        if (!trafficRules.isEmpty()) {
+            ProxySelector.setDefault(new TrafficRules(trafficRules));
         }
     }
 

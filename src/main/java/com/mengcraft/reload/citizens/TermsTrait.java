@@ -1,11 +1,13 @@
 package com.mengcraft.reload.citizens;
 
 import com.mengcraft.reload.Main;
+import lombok.ToString;
 import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -14,6 +16,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @TraitName("terms")
+@ToString
 public class TermsTrait extends Trait {
 
     private LocalDateTime from;
@@ -45,6 +48,7 @@ public class TermsTrait extends Trait {
                 to = LocalDateTime.parse(obj.toString());
             }
         }
+        Main.getInstance().getLogger().fine("Loaded terms: " + this);
     }
 
     @Override
@@ -62,7 +66,7 @@ public class TermsTrait extends Trait {
         LocalDateTime current = LocalDateTime.now();
         if (from != null && current.isBefore(from)) {
             Location loc = npc.getStoredLocation();
-            Bukkit.getScheduler().runTask(Main.getInstance(), () -> npc.despawn());
+            Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> npc.despawn(), 2);
             Main.executor().schedule(() -> Bukkit.getScheduler().runTask(Main.getInstance(), () -> npc.spawn(loc)),
                     current.until(from, ChronoUnit.MILLIS),
                     TimeUnit.MILLISECONDS);
@@ -73,7 +77,7 @@ public class TermsTrait extends Trait {
                         current.until(to, ChronoUnit.MILLIS),
                         TimeUnit.MILLISECONDS);
             } else {
-                Bukkit.getScheduler().runTask(Main.getInstance(), () -> npc.despawn());
+                Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> npc.despawn(), 2);
             }
         }
     }

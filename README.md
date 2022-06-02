@@ -144,3 +144,27 @@ npc:
             if: '!%player_has_permission_<permissionName2>%'
             hide: true
 ```
+
+## Traffic rules
+
+You can combine rules.
+
+```yaml
+traffic_rules:
+  # Log all activity
+  - action: LOG
+
+  # Dump stack trace if context is "Server thread"
+  - action: TRACE
+    context: Server thread
+
+  # Accept if host is "trusted.com"
+  - action: ACCEPT
+    host: trusted.com
+
+  # Reject if host is "example.com" and context is "Server thread"
+  - action: REJECT
+    context: Server thread
+    scheme: http(s)?
+    host: example.com
+```

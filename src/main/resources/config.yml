@@ -23,3 +23,5 @@ commands_alt_checker:
   - "help"
   - "plugins"
   - "version"
+traffic_rules:
+  - action: LOG
