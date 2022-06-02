@@ -7,12 +7,15 @@ import com.google.common.collect.Multimap;
 import com.google.common.reflect.ClassPath;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.event.NPCDespawnEvent;
 import net.citizensnpcs.api.event.NPCLeftClickEvent;
 import net.citizensnpcs.api.event.NPCRightClickEvent;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.persistence.PersistenceLoader;
 import net.citizensnpcs.api.trait.Trait;
+import net.citizensnpcs.api.trait.TraitFactory;
+import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -106,6 +109,12 @@ public class CitizensManager implements Listener {
             HideTrait trait = npc.getTrait(HideTrait.class);
             trait.onJoinWorld(p);
         }
+    }
+
+    public static void addTrait(TraitInfo info) {
+        TraitFactory tf = CitizensAPI.getTraitFactory();
+        tf.deregisterTrait(info);
+        tf.registerTrait(info);
     }
 
     public static CitizensManager getInstance() {

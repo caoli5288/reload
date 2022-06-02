@@ -190,21 +190,14 @@ public class Main extends JavaPlugin implements Listener {
             new TimeVariable(this, "time").register();
         }
         if (pm.getPlugin("Citizens") != null) {
-            TraitFactory tf = CitizensAPI.getTraitFactory();
-            tf.registerTrait(TraitInfo.create(TermsTrait.class));
-            TraitInfo commands = TraitInfo.create(CommandsTrait.class);
-            tf.deregisterTrait(commands);// force resolve conflicts
-            tf.registerTrait(commands);
-            TraitInfo info = TraitInfo.create(HologramsTrait.class);
-            tf.deregisterTrait(info);
-            tf.registerTrait(info);
-            info = TraitInfo.create(HideTrait.class);
-            tf.deregisterTrait(info);
-            tf.registerTrait(info);
+            CitizensManager.addTrait(TraitInfo.create(TermsTrait.class));
+            CitizensManager.addTrait(TraitInfo.create(CommandsTrait.class));
+            CitizensManager.addTrait(TraitInfo.create(HologramsTrait.class));
+            CitizensManager.addTrait(TraitInfo.create(HideTrait.class));
             try {
                 Class.forName("net.citizensnpcs.trait.HologramTrait");
             } catch (ClassNotFoundException e) {
-                tf.registerTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
+                CitizensManager.addTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
             }
             pm.registerEvents(CitizensManager.getInstance(), this);
         }
@@ -286,18 +279,13 @@ public class Main extends JavaPlugin implements Listener {
     @SneakyThrows
     public void shutdown(boolean force) {
         if (force) {
-            String system = System.getProperty("os.name").toLowerCase();
+            String runtimeBean = ManagementFactory.getRuntimeMXBean().getName();
+            String pid = runtimeBean.substring(0, runtimeBean.indexOf('@'));
 
-            String n = ManagementFactory.getRuntimeMXBean().getName();
-            String pid = n.substring(0, n.indexOf('@'));
-
-            if (system.contains("windows")) {
-                ProcessBuilder b = new ProcessBuilder("taskkill", "/f", "/pid", pid);
-                b.start();
-            } else {
-                ProcessBuilder b = new ProcessBuilder("kill", "-9", pid);
-                b.start();
-            }
+            ProcessBuilder b = System.getProperty("os.name").toLowerCase().contains("windows") ?
+                    new ProcessBuilder("taskkill", "/f", "/pid", pid) :
+                    new ProcessBuilder("kill", "-9", pid);
+            b.start();
         } else {
             async.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 300), TimeUnit.SECONDS);
             // Try common way first
