@@ -12,6 +12,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.List;
 
 public class Utils {
@@ -88,5 +89,14 @@ public class Utils {
 
     public static Object eval(String js) throws ScriptException {
         return SCRIPT_ENGINE.eval(js);
+    }
+
+    public static String getPathQuery(URI uri) {
+        String path = uri.getPath();
+        String query = uri.getQuery();
+        if (Utils.isNullOrEmpty(query)) {
+            return path;
+        }
+        return path + "?" + query;
     }
 }

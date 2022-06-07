@@ -3,9 +3,10 @@ package com.mengcraft.reload;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.Data;
 import org.bukkit.Bukkit;
-import org.json.simple.JSONObject;
 import sun.net.spi.DefaultProxySelector;
 
 import java.net.Proxy;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 public class TrafficRules extends DefaultProxySelector {
 
+    private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private final List<Rule> rules;
 
     public TrafficRules(List<Map<?, ?>> trafficRules) {
@@ -48,14 +50,13 @@ public class TrafficRules extends DefaultProxySelector {
         return super.select(uri);
     }
 
-    static void info(URI uri) {
+    private void info(URI uri) {
         Map<String, Object> json = Maps.newHashMap();
         json.put("context", Thread.currentThread().getName());
         json.put("scheme", uri.getScheme());
         json.put("host", uri.getAuthority());
-        json.put("path", uri.getPath());
-        json.put("query", uri.getQuery());
-        Bukkit.getLogger().info("[NM]," + JSONObject.toJSONString(json));
+        json.put("path", Utils.getPathQuery(uri));
+        Bukkit.getLogger().info("[NM]," + gson.toJson(json));
     }
 
     @Data
@@ -152,7 +153,7 @@ public class TrafficRules extends DefaultProxySelector {
 
         @Override
         protected String extract(URI uri) {
-            return uri.getPath();
+            return Utils.getPathQuery(uri);
         }
     }
 
