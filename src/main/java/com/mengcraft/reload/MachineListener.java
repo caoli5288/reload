@@ -60,7 +60,7 @@ public class MachineListener extends Messenger implements Listener, Runnable {
         if (machine.process()) {
             main.getLogger().info("Express " + machine.getExpr() + " matched, " +
                     "scheduling shutdown...");
-            main.shutdown0();
+            main.safeShutdown();
         }
     }
 

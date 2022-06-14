@@ -18,7 +18,6 @@ extension:
   advance_tiles_mechanism: false
   kick_fallback: false
 bootstrap_watchdog: 600
-stop_command: stop
 commands_alt_checker:
   - "help"
   - "plugins"

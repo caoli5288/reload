@@ -12,6 +12,7 @@ import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.CommandExit;
 import com.mengcraft.reload.command.CommandLag;
+import com.mengcraft.reload.command.CommandShutdown;
 import com.mengcraft.reload.command.CommandVelocity;
 import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
@@ -24,16 +25,13 @@ import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.citizensnpcs.api.CitizensAPI;
-import net.citizensnpcs.api.trait.TraitFactory;
 import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.EventPriority;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.plugin.PluginManager;
@@ -60,7 +58,7 @@ import java.util.logging.Level;
 /**
  * Created on 16-8-7.
  */
-public class Main extends JavaPlugin implements Listener {
+public class Main extends JavaPlugin {
 
     private static ScheduledExecutorService async;
     @Getter
@@ -168,10 +166,9 @@ public class Main extends JavaPlugin implements Listener {
         PluginHelper.addExecutor(this, "dumpmemory", "dumpmemory.use", (sender, list) -> dump());
 
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
-        PluginHelper.addExecutor(this, "shutdown", "shutdown.use", (who, input) -> {
-            who.sendMessage(ChatColor.RED + "System shutdown...");
-            shutdown0();
-        });
+        CommandShutdown commandStop = new CommandShutdown();
+        PluginHelper.addExecutor(this, "shutdown", "shutdown.use", commandStop);
+        PluginHelper.addExecutor(this, "stop", "stop.use", commandStop);
         PluginHelper.addExecutor(this, "async", "async.use", this::async);
         PluginHelper.addExecutor(this, "rconnect", "rconnect.use", new CommandConnect());
         PluginHelper.addExecutor(this, "echo", "echo.use", new CommandEcho());
@@ -208,10 +205,10 @@ public class Main extends JavaPlugin implements Listener {
         }
     }
 
-    void shutdown0() {
+    public void safeShutdown() {
         if (!shutdown) {
             shutdown = true;
-            if (Utils.isNullOrEmpty(kick)) {
+            if (Utils.isNullOrEmpty(kick) || Bukkit.getOnlinePlayers().isEmpty()) {
                 shutdown();
             } else {
                 kickAll();
@@ -220,16 +217,15 @@ public class Main extends JavaPlugin implements Listener {
                 } else {
                     // ensure players kicked
                     new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
-                    // reject new players
-                    Bukkit.getPluginManager().registerEvent(AsyncPlayerPreLoginEvent.class, this, EventPriority.NORMAL, this::reject0, this);
+                    Bukkit.getPluginManager().registerEvents(new Listener() {
+                        @EventHandler
+                        public void onJoin(AsyncPlayerPreLoginEvent event) {
+                            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, "");
+                        }
+                    }, this);
                 }
             }
         }
-    }
-
-    private void reject0(Listener __, Event event) {
-        AsyncPlayerPreLoginEvent e = (AsyncPlayerPreLoginEvent) event;
-        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "Server is shutting down");
     }
 
     private void async(CommandSender sender, List<String> params) {
@@ -289,7 +285,7 @@ public class Main extends JavaPlugin implements Listener {
         } else {
             async.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 300), TimeUnit.SECONDS);
             // Try common way first
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), getConfig().getString("stop_command", "stop"));
+            Bukkit.shutdown();
         }
     }
 
