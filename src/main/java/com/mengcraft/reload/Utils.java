@@ -1,5 +1,6 @@
 package com.mengcraft.reload;
 
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -7,10 +8,12 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.List;
@@ -98,5 +101,15 @@ public class Utils {
             return path;
         }
         return path + "?" + query;
+    }
+
+    @NotNull
+    public static String pid() {
+        String rmxName = ManagementFactory.getRuntimeMXBean().getName();
+        return rmxName.substring(0, rmxName.indexOf('@'));
+    }
+
+    public static void ensureLinux() {
+        Preconditions.checkState(System.getProperty("os.name").toLowerCase().contains("linux"), "Only support Linux");
     }
 }

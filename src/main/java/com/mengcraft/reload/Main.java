@@ -9,6 +9,7 @@ import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandAlias;
 import com.mengcraft.reload.command.CommandConnect;
+import com.mengcraft.reload.command.CommandCpus;
 import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.CommandExit;
 import com.mengcraft.reload.command.CommandLag;
@@ -100,6 +101,12 @@ public class Main extends JavaPlugin {
         if (!trafficRules.isEmpty()) {
             ProxySelector.setDefault(new TrafficRules(trafficRules));
         }
+        // cpus
+        if (getConfig().getInt("cpus", 0) > 0) {
+            Utils.ensureLinux();
+            CommandCpus.set(getConfig().getInt("cpus"));
+            getLogger().info("Set cpus to " + getConfig().getInt("cpus"));
+        }
     }
 
     @Override
@@ -177,6 +184,8 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "velocity", "velocity.use", new CommandVelocity());
         PluginHelper.addExecutor(this, "alias", "alias.use", new CommandAlias());
         PluginHelper.addExecutor(this, "lag", "lag.use", new CommandLag());
+        // Cpus command
+        PluginHelper.addExecutor(this, "cpus", "cpus.use", new CommandCpus());
 
         config.getStringList("schedule").forEach(this::runCommand);
 
@@ -275,9 +284,7 @@ public class Main extends JavaPlugin {
     @SneakyThrows
     public void shutdown(boolean force) {
         if (force) {
-            String runtimeBean = ManagementFactory.getRuntimeMXBean().getName();
-            String pid = runtimeBean.substring(0, runtimeBean.indexOf('@'));
-
+            String pid = Utils.pid();
             ProcessBuilder b = System.getProperty("os.name").toLowerCase().contains("windows") ?
                     new ProcessBuilder("taskkill", "/f", "/pid", pid) :
                     new ProcessBuilder("kill", "-9", pid);
