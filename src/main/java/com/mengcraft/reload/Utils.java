@@ -26,12 +26,15 @@ public class Utils {
 
     static {
         SCRIPT_ENGINE = new ScriptEngineManager(Utils.class.getClassLoader())
-                .getEngineByName("nashorn");
-        try {
-            // To compatible with some ecloud placeholders
-            SCRIPT_ENGINE.eval("yes = true; no = false;");
-        } catch (ScriptException e) {
-            e.printStackTrace();
+                .getEngineByExtension("js");
+        // TODO ensure js context
+        if (SCRIPT_ENGINE != null) {
+            try {
+                // To compatible with some ecloud placeholders
+                SCRIPT_ENGINE.eval("yes = true; no = false;");
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            }
         }
         Server server = Bukkit.getServer();
         try {
