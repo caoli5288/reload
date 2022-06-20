@@ -10,9 +10,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -20,22 +17,10 @@ import java.util.List;
 
 public class Utils {
 
-    private static final ScriptEngine SCRIPT_ENGINE;
     @Getter
     private static CommandMap commandMap;
 
     static {
-        SCRIPT_ENGINE = new ScriptEngineManager(Utils.class.getClassLoader())
-                .getEngineByExtension("js");
-        // TODO ensure js context
-        if (SCRIPT_ENGINE != null) {
-            try {
-                // To compatible with some ecloud placeholders
-                SCRIPT_ENGINE.eval("yes = true; no = false;");
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            }
-        }
         Server server = Bukkit.getServer();
         try {
             Field field = server.getClass().getDeclaredField("commandMap");
@@ -80,21 +65,13 @@ public class Utils {
             case "0":
                 return false;
         }
-        try {
-            Object result = Utils.eval(s);
-            if (result instanceof Boolean) {
-                return (boolean) result;
-            } else if (result instanceof Number) {
-                return ((Number) result).doubleValue() != 0;
-            }
-        } catch (ScriptException e) {
-            e.printStackTrace();
+        Object result = JsContext.getInstance().eval(s);
+        if (result instanceof Boolean) {
+            return (boolean) result;
+        } else if (result instanceof Number) {
+            return ((Number) result).doubleValue() != 0;
         }
         return false;
-    }
-
-    public static Object eval(String js) throws ScriptException {
-        return SCRIPT_ENGINE.eval(js);
     }
 
     public static String getPathQuery(URI uri) {
