@@ -7,9 +7,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.Data;
 import org.bukkit.Bukkit;
-import sun.net.spi.DefaultProxySelector;
 
+import java.io.IOException;
 import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -17,12 +19,14 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class TrafficRules extends DefaultProxySelector {
+public class TrafficRules extends ProxySelector {
 
     private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private final List<Rule> rules;
+    private final ProxySelector superSelector;
 
-    public TrafficRules(List<Map<?, ?>> trafficRules) {
+    public TrafficRules(ProxySelector superSelector, List<Map<?, ?>> trafficRules) {
+        this.superSelector = superSelector;
         rules = trafficRules.stream()
                 .map(Rule::from)
                 .collect(Collectors.toList());
@@ -44,10 +48,15 @@ public class TrafficRules extends DefaultProxySelector {
                     Thread.dumpStack();
                     continue;
                 case ACCEPT:
-                    return super.select(uri);
+                    return superSelector.select(uri);
             }
         }
-        return super.select(uri);
+        return superSelector.select(uri);
+    }
+
+    @Override
+    public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        superSelector.connectFailed(uri, sa, ioe);
     }
 
     private void info(URI uri) {

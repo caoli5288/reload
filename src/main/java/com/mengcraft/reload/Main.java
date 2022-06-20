@@ -99,7 +99,8 @@ public class Main extends JavaPlugin {
         }
         List<Map<?, ?>> trafficRules = getConfig().getMapList("traffic_rules");
         if (!trafficRules.isEmpty()) {
-            ProxySelector.setDefault(new TrafficRules(trafficRules));
+            ProxySelector selector = ProxySelector.getDefault();
+            ProxySelector.setDefault(new TrafficRules(selector, trafficRules));
         }
         // cpus
         if (getConfig().getInt("cpus", 0) > 0) {
