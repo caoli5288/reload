@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
@@ -18,7 +19,7 @@ public class CommandsAltChecker implements Listener {
         commands = Sets.newHashSet(altChecker);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent event) {
         Player p = event.getPlayer();
         if (p.isOp()) {
