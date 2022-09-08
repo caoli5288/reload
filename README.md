@@ -29,6 +29,12 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /echo <player_name> \[msg...]
   - Format messages for given player. 
 - /curl \<url> \[data]
+- /alias \<command>
+  - Detect if the command is an alias
+- /rconnect \<player> \<server>
+  - Transport the player to another server.
+- /velocity \<player> \[multiplier]
+  - Give a push to the player. You can specify the multiplier.
 
 ## Expression
 Run expression in config.yml to known when to shutdown. If you want to disable it, set it to null or empty string. 
