@@ -8,6 +8,7 @@ import com.mengcraft.reload.citizens.HideTrait;
 import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandAlias;
+import com.mengcraft.reload.command.CommandCmdAll;
 import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandCpus;
 import com.mengcraft.reload.command.CommandEcho;
@@ -187,6 +188,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "lag", "lag.use", new CommandLag());
         // Cpus command
         PluginHelper.addExecutor(this, "cpus", "cpus.use", new CommandCpus());
+        PluginHelper.addExecutor(this, "cmdall", "cmdall.use", new CommandCmdAll());
 
         config.getStringList("schedule").forEach(this::runCommand);
 
