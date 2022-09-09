@@ -64,16 +64,16 @@ public enum AtScheduler {
 
         try {
             LocalDateTime next = LocalDateTime.parse(input);
-            if (!next.isAfter(LocalDateTime.now())) {
-                return null;
+            if (next.isAfter(LocalDateTime.now())) {
+                return next;
             }
-            return next;
+            return null;
         } catch (DateTimeParseException ign) {
             //
         }
 
         if (input.matches("\\+[0-9]+[smhd]")) {
-            long unit = timeUnit.get(String.valueOf(input.charAt(input.length() - 1)));
+            long unit = TIME_UNIT.get(String.valueOf(input.charAt(input.length() - 1)));
             return LocalDateTime.now().plus(Long.parseLong(input.substring(1, input.length() - 1)) * unit, ChronoUnit.MILLIS);
         }
 
@@ -82,37 +82,42 @@ public enum AtScheduler {
 
     public void every(CommandSender who, String label, String commands) {
         Runner runner = toRunner(label, commands);
-        if (runner.period == -1) {
-            runner.future = Main.executor().scheduleAtFixedRate(() -> Main.getInstance().runCommand(runner.run), runner.until(), TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
-        } else {
-            runner.future = Main.executor().scheduleAtFixedRate(() -> Main.getInstance().runCommand(runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
+        if (runner == null) {
+            who.sendMessage(String.format("Cannot schedule task every %s", label));
+            return;
         }
 
+        runner.future = Main.executor().scheduleAtFixedRate(() -> Main.getInstance().runCommand(runner.run), runner.until(), runner.period, TimeUnit.MILLISECONDS);
         runner.desc = DATE_FORMAT.format(new Date()) + " -> every " + label + " " + runner.run;
         scheduler.put(++nextId, runner);
 
         who.sendMessage(nextId + " " + runner.desc);
     }
 
-    static Map<String, Long> timeUnit = ImmutableMap.of("s", 1000L, "m", 60000L, "h", 3600000L, "d", 86400000L);
+    private final static Map<String, Long> TIME_UNIT = ImmutableMap.of("s", 1000L, "m", 60000L, "h", 3600000L, "d", 86400000L);
 
-    @SneakyThrows
     static Runner toRunner(String input, String run) {
         if (input.matches("[0-9]+[smhd]")) {
-            long unit = timeUnit.get(String.valueOf(input.charAt(input.length() - 1)));
+            long unit = TIME_UNIT.get(String.valueOf(input.charAt(input.length() - 1)));
             long l = Long.parseLong(input.substring(0, input.length() - 1)) * unit;
             return new Runner(LocalDateTime.now().plus(l, ChronoUnit.MILLIS), l, run);
         }
 
-        LocalTime clock = LocalTime.parse(input);
-        if (clock.isAfter(LocalTime.now())) {
-            return new Runner(LocalDateTime.of(LocalDate.now(), clock), TimeUnit.DAYS.toMillis(1), run);
+        try {
+            LocalTime clock = LocalTime.parse(input);
+            if (clock.isAfter(LocalTime.now())) {
+                return new Runner(LocalDateTime.of(LocalDate.now(), clock), TimeUnit.DAYS.toMillis(1), run);
+            }
+
+            return new Runner(LocalDateTime.of(LocalDate.now().plusDays(1), clock), TimeUnit.DAYS.toMillis(1), run);
+        } catch (Exception ign) {
+            //
         }
 
-        return new Runner(LocalDateTime.of(LocalDate.now().plusDays(1), clock), -1, run);
+        return null;
     }
 
-    public void atq(CommandSender who, String label, String obj) {
+    public void atq(CommandSender who, String label, String param) {
         if (Utils.isNullOrEmpty(label)) {
             scheduler.forEach((id, runner) -> {
                 Future<?> future = runner.future;
@@ -121,49 +126,38 @@ public enum AtScheduler {
                 }
             });
             who.sendMessage("Type '/atq a' to check all(cancelled and done) or '/atq c <id>' to cancel");
-        } else {
-            BiConsumer<CommandSender, String> consumer = subProcessor.get("/atq " + label);
-            if (consumer == null) {
-                who.sendMessage(ChatColor.RED + "Unknown command error");
-            } else {
-                consumer.accept(who, obj);
+        } else if (label.equals("a")) {
+            scheduler.forEach((i, runner) -> {
+                Future<?> future = runner.future;
+                String l = i + " " + runner.desc;
+                if (future.isCancelled()) {
+                    l += " <- cancelled";
+                } else if (future.isDone()) {
+                    l += " <- done";
+                }
+                who.sendMessage(l);
+            });
+        } else if (label.equals("c")) {
+            if (param == null) {
+                who.sendMessage(ChatColor.RED + "Syntax error");
+                return;
             }
+            Runner runner = scheduler.get(Integer.valueOf(param));
+            if (runner == null) {
+                who.sendMessage(ChatColor.RED + "Task " + param +
+                        " not found");
+                return;
+            }
+            Future<?> future = runner.future;
+            if (future.isDone() || future.isCancelled()) {
+                who.sendMessage(ChatColor.RED + "Task already done or cancelled");
+                return;
+            }
+
+            future.cancel(true);
+            who.sendMessage(param + " " + runner.desc + " cancelled");
         }
     }
-
-    private final Map<String, BiConsumer<CommandSender, String>> subProcessor = ImmutableMap.of(
-            "/atq a", (who, __i) -> {
-                scheduler.forEach((i, runner) -> {
-                    Future<?> future = runner.future;
-                    String l = i + " " + runner.desc;
-                    if (future.isCancelled()) {
-                        l += " <- cancelled";
-                    } else if (future.isDone()) {
-                        l += " <- done";
-                    }
-                    who.sendMessage(l);
-                });
-            },
-            "/atq c", (who, del) -> {
-                if (del == null) {
-                    who.sendMessage(ChatColor.RED + "Syntax error");
-                    return;
-                }
-                Runner runner = scheduler.get(Integer.valueOf(del));
-                if (runner == null) {
-                    who.sendMessage(ChatColor.RED + "Id not found error");
-                    return;
-                }
-                Future<?> future = runner.future;
-                if (future.isDone() || future.isCancelled()) {
-                    who.sendMessage(ChatColor.RED + "Already done or cancelled error");
-                    return;
-                }
-
-                future.cancel(true);
-                who.sendMessage(del + " " + runner.desc + " cancelled");
-            }
-    );
 
     @Data
     static class Runner {
