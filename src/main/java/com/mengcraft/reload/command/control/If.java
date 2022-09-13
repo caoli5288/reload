@@ -109,7 +109,7 @@ public class If implements ICallable {
                 altCommands.add(ofChild());
                 break;
             default:
-                commands.add(new CommandCallable(cmd));
+                altCommands.add(new CommandCallable(cmd));
                 break;
         }
     }

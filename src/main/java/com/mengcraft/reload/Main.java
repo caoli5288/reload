@@ -15,6 +15,7 @@ import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.CommandExit;
 import com.mengcraft.reload.command.CommandLag;
 import com.mengcraft.reload.command.CommandShutdown;
+import com.mengcraft.reload.command.CommandUptime;
 import com.mengcraft.reload.command.CommandVelocity;
 import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
@@ -168,7 +169,7 @@ public class Main extends JavaPlugin {
 
         getServer().getScheduler().runTaskTimer(this, ticker, config.getInt("wait") * 20L, 20);
 
-        PluginHelper.addExecutor(this, new Uptime());
+        PluginHelper.addExecutor(this, "uptime", "uptime.use", new CommandUptime());
         PluginHelper.addExecutor(this, "at", "at.use", new CommandAt());
         PluginHelper.addExecutor(this, "atq", "atq.use", new CommandAtq());
         PluginHelper.addExecutor(this, "every", "every.use", new CommandEvery());
