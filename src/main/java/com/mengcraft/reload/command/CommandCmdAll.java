@@ -15,7 +15,7 @@ public class CommandCmdAll implements PluginHelper.IExec {
         if (!list.isEmpty()) {
             String commands = String.join(" ", list);
             for (Player online : Bukkit.getOnlinePlayers()) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), Main.format(online, commands));
+                Bukkit.dispatchCommand(sender, Main.format(online, commands));
             }
         }
     }

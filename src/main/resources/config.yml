@@ -19,8 +19,14 @@ extension:
   kick_fallback: false
 bootstrap_watchdog: 600
 commands_alt_checker:
-  - "help"
-  - "plugins"
-  - "version"
+  - help
+  - plugins
+  - version
+  - aac
+  - vulcan
+  - spartan
+  - grim
+  - grimac
+  - gl
 traffic_rules: []
 cpus: 0
