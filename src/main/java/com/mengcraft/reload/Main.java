@@ -213,7 +213,7 @@ public class Main extends JavaPlugin {
             pm.registerEvents(CitizensManager.getInstance(), this);
         }
 
-        List<String> altChecker = getConfig().getStringList("commands_alt_checker");
+        List<?> altChecker = getConfig().getList("commands_alt_checker");
         if (!altChecker.isEmpty()) {
             pm.registerEvents(new CommandsAltChecker(altChecker), this);
         }
