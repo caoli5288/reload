@@ -8,6 +8,7 @@ import com.mengcraft.reload.citizens.HideTrait;
 import com.mengcraft.reload.citizens.HologramsTrait;
 import com.mengcraft.reload.citizens.TermsTrait;
 import com.mengcraft.reload.command.CommandAlias;
+import com.mengcraft.reload.command.CommandCmd;
 import com.mengcraft.reload.command.CommandCmdAll;
 import com.mengcraft.reload.command.CommandConnect;
 import com.mengcraft.reload.command.CommandCpus;
@@ -15,6 +16,7 @@ import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.CommandExit;
 import com.mengcraft.reload.command.CommandLag;
 import com.mengcraft.reload.command.CommandShutdown;
+import com.mengcraft.reload.command.CommandUptime;
 import com.mengcraft.reload.command.CommandVelocity;
 import com.mengcraft.reload.command.at.CommandAt;
 import com.mengcraft.reload.command.at.CommandAtq;
@@ -168,7 +170,7 @@ public class Main extends JavaPlugin {
 
         getServer().getScheduler().runTaskTimer(this, ticker, config.getInt("wait") * 20L, 20);
 
-        PluginHelper.addExecutor(this, new Uptime());
+        PluginHelper.addExecutor(this, "uptime", "uptime.use", new CommandUptime());
         PluginHelper.addExecutor(this, "at", "at.use", new CommandAt());
         PluginHelper.addExecutor(this, "atq", "atq.use", new CommandAtq());
         PluginHelper.addExecutor(this, "every", "every.use", new CommandEvery());
@@ -191,6 +193,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "cpus", "cpus.use", new CommandCpus());
         PluginHelper.addExecutor(this, "if", "if.use", new CommandIf());
         PluginHelper.addExecutor(this, "cmdall", "cmdall.use", new CommandCmdAll());
+        PluginHelper.addExecutor(this, "cmd", "cmd.use", new CommandCmd());
 
         config.getStringList("schedule").forEach(this::runCommand);
 
