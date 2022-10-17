@@ -37,8 +37,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -72,7 +74,6 @@ public class Main extends JavaPlugin {
     private static Main instance;
     boolean shutdown;
     private List<String> kick;
-    private Thread primary;
     private Future<?> bootstrapWatchdog;
     private boolean serverValid;
     private static boolean papi;
@@ -91,7 +92,6 @@ public class Main extends JavaPlugin {
             // ignore
         }
         nms = new NMS();
-        primary = Thread.currentThread();
         async = Executors.newSingleThreadScheduledExecutor();
         saveDefaultConfig();
         reloadConfig();
@@ -225,19 +225,23 @@ public class Main extends JavaPlugin {
     public void safeShutdown() {
         if (!shutdown) {
             shutdown = true;
-            if (Utils.isNullOrEmpty(kick) || Bukkit.getOnlinePlayers().isEmpty()) {
+            if (Bukkit.getOnlinePlayers().isEmpty()) {
                 shutdown();
             } else {
                 kickAll();
-                if (getConfig().getBoolean("extension.kick_fallback")) {
+                if (Bukkit.getOnlinePlayers().isEmpty()) {
                     shutdown();
                 } else {
                     // ensure players kicked
                     new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
                     Bukkit.getPluginManager().registerEvents(new Listener() {
-                        @EventHandler
+                        @EventHandler(priority = EventPriority.HIGHEST)
                         public void onJoin(AsyncPlayerPreLoginEvent event) {
-                            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, "");
+                            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "");
+                        }
+                        @EventHandler(priority = EventPriority.HIGHEST)
+                        public void onJoin(PlayerLoginEvent event) {
+                            event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "");
                         }
                     }, this);
                 }
@@ -298,7 +302,10 @@ public class Main extends JavaPlugin {
                     new ProcessBuilder("kill", "-9", pid);
             b.start();
         } else {
-            async.schedule(() -> shutdown(true), getConfig().getInt("force_wait", 300), TimeUnit.SECONDS);
+            int ttl = getConfig().getInt("force_wait", 300);
+            if (ttl > 0) {
+                async.schedule(() -> shutdown(true), ttl, TimeUnit.SECONDS);
+            }
             // Try common way first
             Bukkit.shutdown();
         }
@@ -324,7 +331,7 @@ public class Main extends JavaPlugin {
     }
 
     public void kickAll() {
-        if (kick.isEmpty()) {
+        if (Utils.isNullOrEmpty(kick)) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 player.kickPlayer(getConfig().getString("message.notify"));
             }
