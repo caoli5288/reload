@@ -23,9 +23,9 @@ import com.mengcraft.reload.command.at.CommandAtq;
 import com.mengcraft.reload.command.at.CommandEvery;
 import com.mengcraft.reload.command.control.CommandIf;
 import com.mengcraft.reload.command.curl.CommandCurl;
+import com.mengcraft.reload.text.TextDatetime;
 import com.mengcraft.reload.util.AdvanceTilesMechanism;
 import com.mengcraft.reload.util.NMS;
-import com.mengcraft.reload.variable.TimeVariable;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -201,7 +201,7 @@ public class Main extends JavaPlugin {
         PluginManager pm = Bukkit.getPluginManager();
         if (pm.getPlugin("PlaceholderAPI") != null) {
             papi = true;
-            new TimeVariable(this, "time").register();
+            new TextDatetime(this).register();
         }
         if (pm.getPlugin("Citizens") != null) {
             CitizensManager.addTrait(TraitInfo.create(TermsTrait.class));

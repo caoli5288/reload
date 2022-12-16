@@ -1,4 +1,4 @@
-package com.mengcraft.reload.variable;
+package com.mengcraft.reload.text;
 
 import com.google.common.collect.Maps;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -6,24 +6,22 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-public abstract class AbstractVariable extends PlaceholderExpansion {
+public abstract class TextAbstract extends PlaceholderExpansion {
 
     protected final Plugin owner;
     protected final String name;
-    protected final Map<String, BiFunction<Player, List<String>, String>> subjects = Maps.newHashMap();
+    protected final Map<String, BiFunction<Player, String, String>> commands = Maps.newHashMap();
 
-    public AbstractVariable(Plugin owner, String name) {
+    public TextAbstract(Plugin owner, String name) {
         this.owner = owner;
         this.name = name;
     }
 
-    public void addSubject(String subject, BiFunction<Player, List<String>, String> function) {
-        subjects.put(subject, function);
+    public void addSubcommand(String command, BiFunction<Player, String, String> function) {
+        commands.put(command, function);
     }
 
     @Override
@@ -47,12 +45,15 @@ public abstract class AbstractVariable extends PlaceholderExpansion {
     }
 
     @Override
-    public String onPlaceholderRequest(Player player, @NotNull String params) {
-        List<String> commands = Arrays.asList(params.split("_"));
-        BiFunction<Player, List<String>, String> function = subjects.get(commands.get(0));
+    public String onPlaceholderRequest(Player player, @NotNull String cmd) {
+        String[] split = cmd.split("_", 2);
+        BiFunction<Player, String, String> function = this.commands.get(split[0]);
         if (function == null) {
             return "null";
         }
-        return String.valueOf(function.apply(player, commands));
+        if (split.length == 1) {
+            return String.valueOf(function.apply(player, ""));
+        }
+        return String.valueOf(function.apply(player, split[1]));
     }
 }
