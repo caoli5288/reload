@@ -388,6 +388,10 @@ public class Main extends JavaPlugin {
         return ChatColor.translateAlternateColorCodes('&', s);
     }
 
+    public static void log(String msg, Exception e) {
+        getInstance().getLogger().log(Level.WARNING, msg, e);
+    }
+
     public static class AwaitHaltLoop extends BukkitRunnable {
 
         private final Main plugin;
