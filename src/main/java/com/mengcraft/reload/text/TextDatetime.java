@@ -32,7 +32,7 @@ public class TextDatetime extends TextAbstract {
         if (time.isAfter(now)) {
             return String.valueOf(now.until(time, ChronoUnit.SECONDS));
         }
-        return "0";
+        return String.valueOf(-time.until(now, ChronoUnit.SECONDS));
     }
 
     public String now(Player who, String cmd) {
