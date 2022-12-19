@@ -35,6 +35,12 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
   - Transport the player to another server.
 - /velocity \<player> \[multiplier]
   - Give a push to the player. You can specify the multiplier.
+- /cmdall \<command...>
+  - Execute commands for all players. Each player's placeholders will be replaced.
+- /cmd <player_name> <command...>
+  - Execute commands for given player and placeholders will be replaced.
+- /if \<...>
+  - See below.
 
 ## Expression
 Run expression in config.yml to known when to shutdown. If you want to disable it, set it to null or empty string. 
@@ -174,3 +180,37 @@ traffic_rules:
     scheme: http(s)?
     host: example.com
 ```
+
+## Placeholders
+
+- `%uptime_time%`
+- `%uptime_ticks%`
+- `%uptime_tps%`
+- `%uptime_tps1%`
+- `%uptime_tps2%`
+- `%uptime_tps3%`
+- `%datetime_now%`
+- `%datetime_now_yyyyMMddHHmmss%`
+- `%datetime_until_2023-01-01T00:00%`
+
+## If command examples
+
+### Simple expr condition
+
+- `if expr %vip_level% > 0; then give %player_name% diamond; tell %player_name% You got diamond!; else give %player_name% apple; tell %player_name% You got apple!; fi`
+
+### Commands condition
+
+Command must correctly implement the return value, i.e., return false on failure.
+
+- `if coins take %player_name% 100; then give %player_name% diamond; else tell %player_name% You don't have enough coins!; fi`
+
+### With elif
+
+- `if expr %vip_level% == 3; then give %player_name% diamond 3; elif expr %vip_level% == 2; then give %player_name% diamond 2; else give %player_name% diamond; fi`
+
+### With other commands
+
+An example of give money to all vip's every 2h.
+
+`every 2h cmdall if expr %vip_level% > 0; then money give %player_name% 50; fi`

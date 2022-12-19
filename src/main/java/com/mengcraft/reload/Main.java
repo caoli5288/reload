@@ -2,6 +2,7 @@ package com.mengcraft.reload;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mengcraft.reload.citizens.CitizensManager;
 import com.mengcraft.reload.citizens.CommandsTrait;
 import com.mengcraft.reload.citizens.HideTrait;
@@ -92,7 +93,11 @@ public class Main extends JavaPlugin {
             // ignore
         }
         nms = new NMS();
-        async = Executors.newSingleThreadScheduledExecutor();
+        async = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+                .setNameFormat("Main-tasks-%d")
+                .setDaemon(false)
+                .setPriority(5)
+                .build());
         saveDefaultConfig();
         reloadConfig();
 
