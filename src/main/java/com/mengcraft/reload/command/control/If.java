@@ -17,19 +17,37 @@ public class If implements ICallable {
     private Flow flow = Flow.INIT;
     private Deque<String> deque;
 
-    public void parse(String[] commands) {
+    public void compile(String line) {
         Preconditions.checkState(flow == Flow.INIT);
         flow = Flow.IF;
         deque = Lists.newLinkedList();
-        for (String command : commands) {
-            deque.add(command.trim());
+        // split
+        int len = line.length();
+        boolean slash = false;
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < len; i++) {
+            char code = line.charAt(i);
+            if (slash) {
+                slash = false;
+                text.append(code);
+            } else if (code == '\\'){
+                slash = true;
+            } else if (code == ';') {
+                // End line
+                deque.add(text.toString().trim());
+                text = new StringBuilder();
+            } else {
+                text.append(code);
+            }
         }
-        parse();
+        deque.add(text.toString().trim());
+        // entering main phase
+        doCompile();
     }
 
-    private void parse() {
+    private void doCompile() {
         while (!isDone() && !deque.isEmpty()) {
-            String cmd = deque.pop();
+            String cmd = deque.poll();
             if (flow == Flow.IF) {
                 ifCmd(cmd);
             } else if (flow == Flow.THEN) {
@@ -119,7 +137,7 @@ public class If implements ICallable {
         If child = new If();
         child.flow = Flow.IF;
         child.deque = deque;
-        child.parse();
+        child.doCompile();
         return child;
     }
 
