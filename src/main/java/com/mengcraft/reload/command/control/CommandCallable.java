@@ -1,7 +1,7 @@
 package com.mengcraft.reload.command.control;
 
+import com.mengcraft.reload.Main;
 import lombok.RequiredArgsConstructor;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -13,9 +13,6 @@ public class CommandCallable implements ICallable {
 
     @Override
     public boolean call(CommandSender caller) {
-        if (caller instanceof Player) {
-            return Bukkit.dispatchCommand(caller, PlaceholderAPI.setPlaceholders((Player) caller, command));
-        }
-        return Bukkit.dispatchCommand(Bukkit.getConsoleSender(), PlaceholderAPI.setPlaceholders(null, command));
+        return Bukkit.dispatchCommand(caller, Main.format(caller instanceof Player ? (Player) caller : null, command));
     }
 }

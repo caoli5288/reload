@@ -2,7 +2,6 @@ package com.mengcraft.reload.command;
 
 import com.mengcraft.reload.Main;
 import com.mengcraft.reload.PluginHelper;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -19,6 +18,6 @@ public class CommandEcho implements PluginHelper.IExec {
         Player p = Main.getInstance().getServer().getPlayerExact(list.get(0));
         Objects.requireNonNull(p);
         String msg = String.join(" ", list.subList(1, list.size()));
-        sender.sendMessage(PlaceholderAPI.setPlaceholders(p, msg));
+        sender.sendMessage(Main.format(p, msg));
     }
 }
