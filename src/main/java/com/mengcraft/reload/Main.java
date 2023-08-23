@@ -26,7 +26,6 @@ import com.mengcraft.reload.command.control.CommandIf;
 import com.mengcraft.reload.command.curl.CommandCurl;
 import com.mengcraft.reload.text.TextDatetime;
 import com.mengcraft.reload.util.AdvanceTilesMechanism;
-import com.mengcraft.reload.util.NMS;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -79,8 +78,6 @@ public class Main extends JavaPlugin {
     private boolean serverValid;
     private static boolean papi;
     @Getter
-    private static NMS nms;
-    @Getter
     private static boolean spigot;
 
     @Override
@@ -92,7 +89,6 @@ public class Main extends JavaPlugin {
         } catch (ClassNotFoundException e) {
             // ignore
         }
-        nms = new NMS();
         async = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
                 .setNameFormat("Main-tasks-%d")
                 .setDaemon(false)
@@ -163,7 +159,9 @@ public class Main extends JavaPlugin {
         serverValid = config.getBoolean("valid_server_alive", true);
         async.scheduleAtFixedRate(() -> {
             ticker.update();
-            if (serverValid && ticker.getShort() < 1 && nms.mServer$isRunning()) {
+            if (serverValid && ticker.getShort() < 1) {
+                // Run only once
+                serverValid = false;
                 getLogger().log(Level.SEVERE, "TPS < 1, preparing kill server");
                 if (config.getBoolean("extension.auto_dump")) {
                     dump();
