@@ -1,5 +1,6 @@
 package com.mengcraft.reload.command.control;
 
+import com.mengcraft.reload.Main;
 import com.mengcraft.reload.Utils;
 import lombok.RequiredArgsConstructor;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -13,7 +14,7 @@ public class ExprCallable implements ICallable {
 
     @Override
     public boolean call(CommandSender caller) {
-        String cmd = PlaceholderAPI.setPlaceholders(caller instanceof Player ? (Player) caller : null, command);
+        String cmd = Main.format(caller instanceof Player ? (Player) caller : null, command);
         return !Utils.isNullOrEmpty(cmd) && Utils.asBoolean(cmd);
     }
 }

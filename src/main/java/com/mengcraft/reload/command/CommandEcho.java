@@ -19,6 +19,6 @@ public class CommandEcho implements PluginHelper.IExec {
         Player p = Main.getInstance().getServer().getPlayerExact(list.get(0));
         Objects.requireNonNull(p);
         String msg = String.join(" ", list.subList(1, list.size()));
-        sender.sendMessage(PlaceholderAPI.setPlaceholders(p, msg));
+        sender.sendMessage(Main.format(p, msg));
     }
 }

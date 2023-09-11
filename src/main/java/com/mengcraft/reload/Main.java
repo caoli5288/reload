@@ -381,12 +381,11 @@ public class Main extends JavaPlugin {
         if (Utils.isNullOrEmpty(s)) {
             return s;
         }
-        if (p != null) {
-            if (papi) {
-                return PlaceholderAPI.setPlaceholders(p, s);
-            } else {
-                s = s.replace("%player_name%", p.getName());
-            }
+        // PAPI allowed null player somehow
+        if (papi) {
+            return PlaceholderAPI.setPlaceholders(p, s);
+        } else if (p != null) {
+            s = s.replace("%player_name%", p.getName());
         }
         return ChatColor.translateAlternateColorCodes('&', s);
     }
