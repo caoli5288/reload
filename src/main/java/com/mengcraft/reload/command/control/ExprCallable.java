@@ -3,7 +3,6 @@ package com.mengcraft.reload.command.control;
 import com.mengcraft.reload.Main;
 import com.mengcraft.reload.Utils;
 import lombok.RequiredArgsConstructor;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 

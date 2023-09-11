@@ -32,21 +32,22 @@ import java.util.List;
 @TraitName("holograms")
 public class HologramsTrait extends Trait implements IReloadable {
 
+    public static final int DIRECTION_BOTTOM_UP = 0;
+    public static final int DIRECTION_TOP_DOWN = 1;
     private final List<NPC> lineHolograms = Lists.newArrayList();
     @Persist
     private final List<String> lines = Lists.newArrayList();
     private final NPCRegistry registry = CitizensAPI.createAnonymousNPCRegistry(new MemoryNPCDataStore());
     private Location currentLoc;
     @Persist
-    private HologramDirection direction = HologramDirection.TOP_DOWN;
+    private int direction = DIRECTION_TOP_DOWN;
     private boolean lastNameplateVisible;
     @Persist
     private double lineHeight = -1;
     @Persist
     private double offset = 1.8;
-    @Getter
-    @Setter
-    private Refresh refresh = Refresh.SLOW;
+    @Persist
+    private int updateTicks = 200;
     private int ticks;
 
     public HologramsTrait() {
@@ -88,7 +89,7 @@ public class HologramsTrait extends Trait implements IReloadable {
         trait.setHasBaseplate(false);
         hologramNPC.spawn(currentLoc.clone().add(0,
                 offset
-                        + (direction == HologramDirection.BOTTOM_UP ? heightOffset : getMaxHeight() - heightOffset),
+                        + (direction == DIRECTION_BOTTOM_UP ? heightOffset : getMaxHeight() - heightOffset),
                 0));
         return hologramNPC;
     }
@@ -96,7 +97,7 @@ public class HologramsTrait extends Trait implements IReloadable {
     /**
      * @return The direction that hologram lines are displayed in
      */
-    public HologramDirection getDirection() {
+    public int getDirection() {
         return direction;
     }
 
@@ -104,22 +105,15 @@ public class HologramsTrait extends Trait implements IReloadable {
      * @param direction The new direction
      * @see #getDirection()
      */
-    public void setDirection(HologramDirection direction) {
+    public void setDirection(int direction) {
         this.direction = direction;
         onDespawn();
         onSpawn();
     }
 
     private double getHeight(int lineNumber) {
-        return (lineHeight == -1 ? 0.4D : lineHeight)
+        return (lineHeight == -1 ? 0.25D : lineHeight)
                 * (lastNameplateVisible ? lineNumber + 1 : lineNumber);
-    }
-
-    /**
-     * Note: this is implementation-specific and may be removed at a later date.
-     */
-    public Collection<ArmorStand> getHologramEntities() {
-        return Collections2.transform(lineHolograms, (n) -> (ArmorStand) n.getEntity());
     }
 
     /**
@@ -141,18 +135,6 @@ public class HologramsTrait extends Trait implements IReloadable {
         onSpawn();
     }
 
-    @Override
-    public void load(DataKey key) throws NPCLoadException {
-        if (key.keyExists("refresh")) {
-            refresh = Refresh.valueOf(key.getString("refresh"));
-        }
-    }
-
-    @Override
-    public void save(DataKey key) {
-        key.setString("refresh", refresh.name());
-    }
-
     /**
      * @return the hologram lines, in bottom-up order
      */
@@ -161,7 +143,7 @@ public class HologramsTrait extends Trait implements IReloadable {
     }
 
     private double getMaxHeight() {
-        return (lineHeight == -1 ? 0.4D : lineHeight)
+        return (lineHeight == -1 ? 0.25D : lineHeight)
                 * (lines.size() + 1);
     }
 
@@ -208,7 +190,7 @@ public class HologramsTrait extends Trait implements IReloadable {
             onDespawn();
             return;
         }
-        if (ticks++ % refresh.getValue() != 0) {// Call every ${updateTicks} ticks
+        if (ticks++ % updateTicks != 0) {// Call every ${updateTicks} ticks
             return;
         }
         if (currentLoc == null) {
@@ -276,26 +258,11 @@ public class HologramsTrait extends Trait implements IReloadable {
         onSpawn();
     }
 
-    public enum HologramDirection {
-        BOTTOM_UP,
-        TOP_DOWN;
+    public int getUpdateTicks() {
+        return updateTicks;
     }
 
-    public enum Refresh {
-        FASTEST(2),
-        FAST(10),
-        MEDIUM(20),
-        SLOW(100),
-        SLOWEST(200);
-
-        private final int value;
-
-        Refresh(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
+    public void setUpdateTicks(int updateTicks) {
+        this.updateTicks = updateTicks;
     }
 }

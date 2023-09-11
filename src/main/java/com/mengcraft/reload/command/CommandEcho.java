@@ -2,7 +2,6 @@ package com.mengcraft.reload.command;
 
 import com.mengcraft.reload.Main;
 import com.mengcraft.reload.PluginHelper;
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
