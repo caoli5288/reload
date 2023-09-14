@@ -54,7 +54,7 @@ public class HideTrait extends Trait {
         for (Rule rule : rules) {
             if (rule.check(p)) {
                 if (rule.isHide()) {
-                    p.hidePlayer(Main.getInstance(), (Player) entity);
+                    p.hidePlayer((Player) entity);
                 }
                 // just return
                 return;

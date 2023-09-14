@@ -25,7 +25,6 @@ import com.mengcraft.reload.command.at.CommandEvery;
 import com.mengcraft.reload.command.control.CommandIf;
 import com.mengcraft.reload.command.curl.CommandCurl;
 import com.mengcraft.reload.text.TextDatetime;
-import com.mengcraft.reload.util.AdvanceTilesMechanism;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -126,11 +125,6 @@ public class Main extends JavaPlugin {
                 shutdown(false);
                 return;
             }
-        }
-
-        if (spigot && config.getBoolean("extension.advance_tiles_mechanism")) {
-            getLogger().info("Use advance tiles mechanism");
-            Bukkit.getScheduler().runTaskTimerAsynchronously(this, new AdvanceTilesMechanism(), 300, 300);// Update per 15s
         }
 
         if (bootstrapWatchdog != null) {
