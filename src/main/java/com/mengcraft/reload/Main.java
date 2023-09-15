@@ -35,11 +35,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -231,16 +226,6 @@ public class Main extends JavaPlugin {
                 } else {
                     // ensure players kicked
                     new AwaitHaltLoop(this).runTaskTimer(this, 20, 20);
-                    Bukkit.getPluginManager().registerEvents(new Listener() {
-                        @EventHandler(priority = EventPriority.HIGHEST)
-                        public void onJoin(AsyncPlayerPreLoginEvent event) {
-                            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "");
-                        }
-                        @EventHandler(priority = EventPriority.HIGHEST)
-                        public void onJoin(PlayerLoginEvent event) {
-                            event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "");
-                        }
-                    }, this);
                 }
             }
         }
@@ -332,10 +317,6 @@ public class Main extends JavaPlugin {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 player.kickPlayer(getConfig().getString("message.notify"));
             }
-        } else if (getConfig().getBoolean("extension.kick_fallback")) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                p.kickPlayer("fallback/" + nextKickTo());
-            }
         } else {
             ByteArrayDataOutput buf = ByteStreams.newDataOutput();
             buf.writeUTF("Connect");
@@ -391,10 +372,15 @@ public class Main extends JavaPlugin {
     public static class AwaitHaltLoop extends BukkitRunnable {
 
         private final Main plugin;
+        private final boolean whitelist;
         private int cnt;
 
         AwaitHaltLoop(Main plugin) {
             this.plugin = plugin;
+            whitelist = Bukkit.hasWhitelist();
+            if (!whitelist) {
+                Bukkit.setWhitelist(true);
+            }
         }
 
         @Override
@@ -402,6 +388,9 @@ public class Main extends JavaPlugin {
             cnt++;
             if (cnt >= 60 || Bukkit.getOnlinePlayers().isEmpty()) {
                 cancel();
+                if (!whitelist) {
+                    Bukkit.setWhitelist(false);
+                }
                 plugin.shutdown();
                 return;
             }

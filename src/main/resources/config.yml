@@ -15,8 +15,6 @@ valid_sqlite: false
 valid_server_alive: true
 extension:
   auto_dump: false
-  advance_tiles_mechanism: false
-  kick_fallback: false
 bootstrap_watchdog: 600
 commands_alt_checker:
   - help
