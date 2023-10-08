@@ -6,6 +6,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -13,14 +16,14 @@ public abstract class TextAbstract extends PlaceholderExpansion {
 
     protected final Plugin owner;
     protected final String name;
-    protected final Map<String, BiFunction<Player, String, String>> commands = Maps.newHashMap();
+    protected final Map<String, BiFunction<Player, List<String>, String>> commands = Maps.newHashMap();
 
     public TextAbstract(Plugin owner, String name) {
         this.owner = owner;
         this.name = name;
     }
 
-    public void addSubcommand(String command, BiFunction<Player, String, String> function) {
+    public void addSubcommand(String command, BiFunction<Player, List<String>, String> function) {
         commands.put(command, function);
     }
 
@@ -46,14 +49,14 @@ public abstract class TextAbstract extends PlaceholderExpansion {
 
     @Override
     public String onPlaceholderRequest(Player player, @NotNull String cmd) {
-        String[] split = cmd.split("_", 2);
-        BiFunction<Player, String, String> function = this.commands.get(split[0]);
+        String[] split = cmd.split("_");
+        BiFunction<Player, List<String>, String> function = commands.get(split[0]);
         if (function == null) {
             return "null";
         }
         if (split.length == 1) {
-            return String.valueOf(function.apply(player, ""));
+            return String.valueOf(function.apply(player, Collections.emptyList()));
         }
-        return String.valueOf(function.apply(player, split[1]));
+        return String.valueOf(function.apply(player, Arrays.asList(split).subList(1, split.length)));
     }
 }

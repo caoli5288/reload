@@ -10,6 +10,7 @@ import org.bukkit.plugin.Plugin;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class TextDatetime extends TextAbstract {
@@ -25,22 +26,29 @@ public class TextDatetime extends TextAbstract {
         addSubcommand("until", this::until);
     }
 
-    public String until(Player who, String cmd) {
+    public String until(Player who, List<String> cmd) {
         // %datetime_until_2099-01-01T00:00% => 16384
-        LocalDateTime time = LocalDateTime.parse(cmd);
-        LocalDateTime now = LocalDateTime.now();
-        if (time.isAfter(now)) {
-            return String.valueOf(now.until(time, ChronoUnit.SECONDS));
+        if (cmd.isEmpty()) {
+            return "0";
         }
-        return String.valueOf(-time.until(now, ChronoUnit.SECONDS));
+        LocalDateTime time = LocalDateTime.parse(cmd.get(0));
+        LocalDateTime now = LocalDateTime.now();
+        ChronoUnit unit = ChronoUnit.SECONDS;
+        if (cmd.size() > 1) {
+            unit = ChronoUnit.valueOf(cmd.get(1).toUpperCase());
+        }
+        if (time.isAfter(now)) {
+            return String.valueOf(now.until(time, unit));
+        }
+        return String.valueOf(-time.until(now, unit));
     }
 
-    public String now(Player who, String cmd) {
+    public String now(Player who, List<String> cmd) {
         // %datetime_now% => 2023-01-01T00:00
         // %datetime_now_yyyyMMdd% => 20230101
-        if (Utils.isNullOrEmpty(cmd)) {
+        if (cmd.isEmpty()) {
             return LocalDateTime.now().toString();
         }
-        return LocalDateTime.now().format(formatters.getUnchecked(cmd));
+        return LocalDateTime.now().format(formatters.getUnchecked(cmd.get(0)));
     }
 }
