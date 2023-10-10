@@ -17,7 +17,7 @@ public class CitizensManager implements Listener {
     public void onLeftClick(NPCLeftClickEvent event) {
         NPC npc = event.getNPC();
         if (npc.hasTrait(CommandsTrait.class)) {
-            npc.getTrait(CommandsTrait.class).onClick(event.getClicker());
+            npc.getTrait(CommandsTrait.class).click(event.getClicker());
         }
     }
 
@@ -25,7 +25,7 @@ public class CitizensManager implements Listener {
     public void onRightClick(NPCRightClickEvent event) {
         NPC npc = event.getNPC();
         if (npc.hasTrait(CommandsTrait.class)) {
-            npc.getTrait(CommandsTrait.class).onClick(event.getClicker());
+            npc.getTrait(CommandsTrait.class).click(event.getClicker());
         }
     }
 

@@ -16,6 +16,8 @@ import net.citizensnpcs.api.util.Messaging;
 import net.citizensnpcs.util.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Comparator;
 import java.util.List;
@@ -36,7 +38,21 @@ public class CommandsTrait extends Trait {
         super("commands");
     }
 
-    public void onClick(Player who) {
+    @EventHandler
+    public void quit(PlayerQuitEvent event) {
+        Player who = event.getPlayer();
+        PlayerNPCCommand command = cooldowns.get(who.getUniqueId());
+        if (command != null) {
+            for (NPCCommand value : commands.values()) {
+                command.valid(value);
+            }
+            if (command.isClean()) {
+                cooldowns.remove(who.getUniqueId());
+            }
+        }
+    }
+
+    public void click(Player who) {
         List<NPCCommand> list = Lists.newArrayList(commands.values());
         if (executionMode == ExecutionMode.RANDOM) {
             if (list.size() > 1) {
@@ -99,6 +115,21 @@ public class CommandsTrait extends Trait {
         Map<Integer, Integer> nUsed = Maps.newHashMap();
 
         public PlayerNPCCommand() {
+        }
+
+        public boolean isClean() {
+            return lastUsed.isEmpty() && nUsed.isEmpty();
+        }
+
+        public void valid(NPCCommand command) {
+            int cid = command.id;
+            if (lastUsed.containsKey(cid)) {
+                long currentTimeSec = System.currentTimeMillis() / 1000;
+                long deadline = ((Number) lastUsed.get(cid)).longValue() + command.cooldown;
+                if (currentTimeSec >= deadline) {
+                    lastUsed.remove(cid);
+                }
+            }
         }
 
         public boolean canUse(Player player, NPCCommand command) {
