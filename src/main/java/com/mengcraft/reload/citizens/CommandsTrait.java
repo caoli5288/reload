@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @TraitName("commands")
-public class CommandsTrait extends Trait implements IClickable {
+public class CommandsTrait extends Trait {
 
     @Persist
     private ExecutionMode executionMode = ExecutionMode.LINEAR;
@@ -36,7 +36,6 @@ public class CommandsTrait extends Trait implements IClickable {
         super("commands");
     }
 
-    @Override
     public void onClick(Player who) {
         List<NPCCommand> list = Lists.newArrayList(commands.values());
         if (executionMode == ExecutionMode.RANDOM) {

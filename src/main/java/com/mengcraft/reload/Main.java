@@ -5,9 +5,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mengcraft.reload.citizens.CitizensManager;
 import com.mengcraft.reload.citizens.CommandsTrait;
-import com.mengcraft.reload.citizens.HideTrait;
-import com.mengcraft.reload.citizens.HologramsTrait;
-import com.mengcraft.reload.citizens.TermsTrait;
+import com.mengcraft.reload.citizens.TimelinesTrait;
 import com.mengcraft.reload.command.CommandAlias;
 import com.mengcraft.reload.command.CommandCmd;
 import com.mengcraft.reload.command.CommandCmdAll;
@@ -200,15 +198,8 @@ public class Main extends JavaPlugin {
             new TextDatetime(this).register();
         }
         if (pm.getPlugin("Citizens") != null) {
-            CitizensManager.addTrait(TraitInfo.create(TermsTrait.class));
+            CitizensManager.addTrait(TraitInfo.create(TimelinesTrait.class));
             CitizensManager.addTrait(TraitInfo.create(CommandsTrait.class));
-            CitizensManager.addTrait(TraitInfo.create(HologramsTrait.class));
-            CitizensManager.addTrait(TraitInfo.create(HideTrait.class));
-            try {
-                Class.forName("net.citizensnpcs.trait.HologramTrait");
-            } catch (ClassNotFoundException e) {
-                CitizensManager.addTrait(TraitInfo.create(HologramsTrait.class).withName("hologramtrait"));
-            }
             pm.registerEvents(CitizensManager.getInstance(), this);
         }
 
