@@ -100,7 +100,7 @@ public class Artifact {
         // ensure parents
         Files.createParentDirs(file);
         // temp file
-        File tmp = File.createTempFile("", ".tmp", file.getParentFile());
+        File tmp = File.createTempFile("tmp", ".tmp", file.getParentFile());
         tmp.deleteOnExit();
         // download from maven repository
         URL url = new URL(MAVEN_REPOSITORY + ARTIFACT_PATH
