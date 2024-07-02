@@ -28,3 +28,6 @@ commands_alt_checker:
   - gl
 traffic_rules: []
 cpus: 0
+metadata_cleaner:
+  enable: false
+  log: false

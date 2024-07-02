@@ -41,12 +41,12 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.ProxySelector;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +155,7 @@ public class Main extends JavaPlugin {
                 serverValid = false;
                 getLogger().log(Level.SEVERE, "TPS < 1, preparing kill server");
                 if (config.getBoolean("extension.auto_dump")) {
-                    dump();
+                    dump(false);
                 }
                 getLogger().log(Level.SEVERE, "Kill server");
                 shutdown(true);
@@ -169,7 +169,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "atq", "atq.use", new CommandAtq());
         PluginHelper.addExecutor(this, "every", "every.use", new CommandEvery());
         PluginHelper.addExecutor(this, "sudo", "sudo.use", this::sudo);
-        PluginHelper.addExecutor(this, "dumpmemory", "dumpmemory.use", (sender, list) -> dump());
+        PluginHelper.addExecutor(this, "dumpmemory", "dumpmemory.use", (sender, list) -> dump(list.contains("live")));
 
         PluginHelper.addExecutor(this, "halt", "halt.use", (who, input) -> shutdown(true));
         CommandShutdown commandStop = new CommandShutdown();
@@ -203,9 +203,13 @@ public class Main extends JavaPlugin {
             pm.registerEvents(CitizensManager.getInstance(), this);
         }
 
-        List<?> altChecker = getConfig().getList("commands_alt_checker");
+        List<?> altChecker = config.getList("commands_alt_checker");
         if (!altChecker.isEmpty()) {
             pm.registerEvents(new CommandsAltChecker(altChecker), this);
+        }
+
+        if (config.getBoolean("metadata_cleaner.enable", false)) {
+            MetadataCleaner.load(this, config.getBoolean("metadata_cleaner.log", false));
         }
     }
 
@@ -299,11 +303,12 @@ public class Main extends JavaPlugin {
         shutdown(false);
     }
 
-    public void dump() {
-        String filename = "dump-" + LocalDateTime.now() + ".hprof";
+    public void dump(boolean live) {
+        String gameName = new File(".").getAbsoluteFile().getParentFile().getName();
+        String filename = gameName + "-" + Utils.pid() + ".hprof";
         HotSpotDiagnosticMXBean diagnostic = ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean.class);
         try {
-            diagnostic.dumpHeap(filename, false);
+            diagnostic.dumpHeap(filename, live);
         } catch (IOException e) {
         }
         getLogger().log(Level.INFO, "Heap dumped to " + filename);
