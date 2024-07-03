@@ -7,6 +7,7 @@ import com.mengcraft.reload.citizens.CitizensManager;
 import com.mengcraft.reload.citizens.CommandsTrait;
 import com.mengcraft.reload.citizens.TimelinesTrait;
 import com.mengcraft.reload.command.CommandAlias;
+import com.mengcraft.reload.command.CommandChunk;
 import com.mengcraft.reload.command.CommandCmd;
 import com.mengcraft.reload.command.CommandCmdAll;
 import com.mengcraft.reload.command.CommandConnect;
@@ -30,6 +31,9 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.World;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -40,6 +44,7 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.NumberConversions;
 
 import java.io.File;
 import java.io.IOException;
@@ -188,6 +193,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "if", "if.use", new CommandIf());
         PluginHelper.addExecutor(this, "cmdall", "cmdall.use", new CommandCmdAll());
         PluginHelper.addExecutor(this, "cmd", "cmd.use", new CommandCmd());
+        PluginHelper.addExecutor(this, "chunk", "chunk.use", new CommandChunk());
 
         config.getStringList("schedule").forEach(this::runCommand);
 
@@ -203,14 +209,9 @@ public class Main extends JavaPlugin {
             pm.registerEvents(CitizensManager.getInstance(), this);
         }
 
-        List<?> altChecker = config.getList("commands_alt_checker");
-        if (!altChecker.isEmpty()) {
-            pm.registerEvents(new CommandsAltChecker(altChecker), this);
-        }
-
-        if (config.getBoolean("metadata_cleaner.enable", false)) {
-            MetadataCleaner.load(this, config.getBoolean("metadata_cleaner.log", false));
-        }
+        ChunksKeeper.load(this, config);
+        CommandsAltChecker.load(this, config);
+        MetadataCleaner.load(this, config);
     }
 
     public void safeShutdown() {

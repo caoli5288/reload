@@ -3,6 +3,7 @@ package com.mengcraft.reload;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -38,10 +39,11 @@ public class MetadataCleaner implements Listener {
         metadataMap = (Map<String, ?>) f.get(playerMetadata);
     }
 
-    public static void load(Plugin plugin, boolean log) {
-        Preconditions.checkState(instance == null, "Already loaded");
-        instance = new MetadataCleaner(log);
-        Bukkit.getPluginManager().registerEvents(instance, plugin);
+    public static void load(Plugin plugin, FileConfiguration config) {
+        Preconditions.checkState(instance == null);
+        if (config.getBoolean("metadata_cleaner.enable", false)) {
+            Bukkit.getPluginManager().registerEvents(instance = new MetadataCleaner(config.getBoolean("metadata_cleaner.log", false)), plugin);
+        }
     }
 
     @EventHandler

@@ -1,19 +1,24 @@
 package com.mengcraft.reload;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import lombok.Data;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 import java.util.Map;
 
 public class CommandsAltChecker implements Listener {
 
+    private static CommandsAltChecker instance;
     private final Map<String, AltCheckInfo> commands = Maps.newHashMap();
 
     public CommandsAltChecker(List<?> alts) {
@@ -26,6 +31,14 @@ public class CommandsAltChecker implements Listener {
                 AltCheckInfo info = new AltCheckInfo(map.get("name"), map.get("message"));
                 commands.put(info.getName(), info);
             }
+        }
+    }
+
+    public static void load(Plugin plugin, FileConfiguration config) {
+        Preconditions.checkState(instance == null);
+        List<?> list = config.getList("commands_alt_checker");
+        if (!list.isEmpty()) {
+            Bukkit.getPluginManager().registerEvents(instance = new CommandsAltChecker(list), plugin);
         }
     }
 

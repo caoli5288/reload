@@ -31,3 +31,7 @@ cpus: 0
 metadata_cleaner:
   enable: false
   log: false
+chunks_keeper:
+  enable: false
+  limit: 1000
+  log: false
