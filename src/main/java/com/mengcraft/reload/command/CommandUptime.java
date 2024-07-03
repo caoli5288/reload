@@ -98,10 +98,10 @@ public class CommandUptime extends PlaceholderExpansion implements PluginHelper.
         } else if (l > H) {
             return hour(l);
         }
-        return (l / MIN) + " min(s)";
+        return (l / MIN) + " minute(s)";
     }
 
     private static String hour(long l) {
-        return ((l % DAY) / H) + ":" + ((l % H) / MIN);
+        return ((l % DAY) / H) + "h" + ((l % H) / MIN) + "m";
     }
 }
