@@ -1,5 +1,6 @@
 package com.mengcraft.reload;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -220,15 +221,11 @@ public class Main extends JavaPlugin {
             if (Bukkit.getOnlinePlayers().isEmpty()) {
                 shutdown();
             } else {
-                kickAll();
-                if (Bukkit.getOnlinePlayers().isEmpty()) {
-                    shutdown();
-                } else {
-                    // ensure players kicked
-                    AwaitHaltLoop haltLoop = new AwaitHaltLoop(this);
-                    haltLoop.runTaskTimer(this, 20, 20);
-                    Bukkit.getPluginManager().registerEvents(haltLoop, this);
-                }
+//                kickAll();// kick is not an immediate action
+                // ensure players kicked
+                AwaitHaltLoop haltLoop = new AwaitHaltLoop(this);
+                haltLoop.runTaskTimer(this, 0, 20);
+                Bukkit.getPluginManager().registerEvents(haltLoop, this);
             }
         }
     }
@@ -317,7 +314,7 @@ public class Main extends JavaPlugin {
 
     public void kickAll() {
         if (Utils.isNullOrEmpty(kick)) {
-            for (Player player : Bukkit.getOnlinePlayers()) {
+            for (Player player : Lists.newArrayList(Bukkit.getOnlinePlayers())) {
                 player.kickPlayer(getConfig().getString("message.notify"));
             }
         } else {
@@ -327,7 +324,7 @@ public class Main extends JavaPlugin {
 
             byte[] data = buf.toByteArray();
 
-            for (Player p : Bukkit.getOnlinePlayers()) {
+            for (Player p : Lists.newArrayList(Bukkit.getOnlinePlayers())) {
                 if (p.getListeningPluginChannels().contains("BungeeCord")) {
                     p.sendPluginMessage(this, "BungeeCord", data);
                 } else {
