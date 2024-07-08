@@ -60,8 +60,8 @@ public class CommandChunk implements PluginHelper.IExec {
             for (World it : Bukkit.getWorlds()) {
                 console.sendMessage(it.getName() + ": " + it.getChunkCount());
             }
-            console.sendMessage("/chunk load <world> <x[:len]> <z[:len]> [gen]");
-            console.sendMessage("/chunk clean-tile <world> <tile[,tile2...]> [0|1]");
+            console.sendMessage("/chunk load <*|world> <x[:len]> <z[:len]> [gen]");
+            console.sendMessage("/chunk clean-tile <*|world> <tile[,tile2...]> [0|1]");
         } else {
             String label = list.remove(0);
             if (label.equals("load")) {
@@ -81,6 +81,8 @@ public class CommandChunk implements PluginHelper.IExec {
                 .map(BY_NAME::get)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        // notify clean types
+        console.sendMessage("Clean " + types);
         CleanTileOptions options = new CleanTileOptions(levels, types);
         if (list.size() > 2 && list.get(2).equals("1")) {
             taskClean.put(console.getName(), options);

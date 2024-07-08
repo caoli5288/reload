@@ -1,5 +1,6 @@
 package com.mengcraft.reload;
 
+import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -112,7 +113,7 @@ public class PluginHelper {
         @Override
         public boolean execute(CommandSender who, String l, String[] i) {
             try {
-                exec.exec(who, Arrays.asList(i));
+                exec.exec(who, Lists.newArrayList(i));
                 return true;
             } catch (Exception e) {
                 who.sendMessage(ChatColor.RED + e.toString());
