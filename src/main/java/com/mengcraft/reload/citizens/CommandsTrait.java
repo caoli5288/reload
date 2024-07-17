@@ -3,6 +3,7 @@ package com.mengcraft.reload.citizens;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mengcraft.reload.Main;
+import com.mengcraft.reload.command.control.ExprCallable;
 import lombok.Getter;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPC;
@@ -134,6 +135,13 @@ public class CommandsTrait extends Trait {
 
         public boolean canUse(Player player, NPCCommand command) {
             for (String perm : command.perms) {
+                // Check placeholder permission
+                if (perm.contains("%")) {
+                    if (!ExprCallable.call(player, perm)) {
+                        return false;
+                    }
+                } else
+                // Check vanilla permission
                 if (!player.hasPermission(perm)) {
                     return false;
                 }

@@ -13,7 +13,11 @@ public class ExprCallable implements ICallable {
 
     @Override
     public boolean call(CommandSender caller) {
-        String cmd = Main.format(caller instanceof Player ? (Player) caller : null, command);
+        return call(caller instanceof Player ? (Player) caller : null, command);
+    }
+
+    public static boolean call(Player caller, String command) {
+        String cmd = Main.format(caller, command);
         return !Utils.isNullOrEmpty(cmd) && Utils.asBoolean(cmd);
     }
 }
