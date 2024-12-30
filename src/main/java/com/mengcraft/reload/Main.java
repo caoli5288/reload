@@ -25,6 +25,7 @@ import com.mengcraft.reload.command.at.CommandEvery;
 import com.mengcraft.reload.command.control.CommandIf;
 import com.mengcraft.reload.command.curl.CommandCurl;
 import com.mengcraft.reload.text.TextDatetime;
+import com.mengcraft.reload.text.TextNextInt;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -32,9 +33,6 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.World;
-import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -45,7 +43,6 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.NumberConversions;
 
 import java.io.File;
 import java.io.IOException;
@@ -203,6 +200,7 @@ public class Main extends JavaPlugin {
         if (pm.getPlugin("PlaceholderAPI") != null) {
             papi = true;
             new TextDatetime(this).register();
+            new TextNextInt(this).register();
         }
         if (pm.getPlugin("Citizens") != null) {
             CitizensManager.addTrait(TraitInfo.create(TimelinesTrait.class));

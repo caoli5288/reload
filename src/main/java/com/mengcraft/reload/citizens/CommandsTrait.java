@@ -14,7 +14,7 @@ import net.citizensnpcs.api.trait.Trait;
 import net.citizensnpcs.api.trait.TraitName;
 import net.citizensnpcs.api.util.DataKey;
 import net.citizensnpcs.api.util.Messaging;
-import net.citizensnpcs.util.Util;
+import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -57,7 +57,7 @@ public class CommandsTrait extends Trait {
         List<NPCCommand> list = Lists.newArrayList(commands.values());
         if (executionMode == ExecutionMode.RANDOM) {
             if (list.size() > 1) {
-                runCommand(who, list.get(Util.getFastRandom().nextInt(list.size())));
+                runCommand(who, list.get(RandomUtils.nextInt(list.size())));
             }
         } else {
             if (executionMode == ExecutionMode.SEQUENTIAL) {

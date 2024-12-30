@@ -7,7 +7,6 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -52,11 +51,11 @@ public abstract class TextAbstract extends PlaceholderExpansion {
         String[] split = cmd.split("_");
         BiFunction<Player, List<String>, String> function = commands.get(split[0]);
         if (function == null) {
+            function = commands.get("");
+        }
+        if (function == null) {
             return "null";
         }
-        if (split.length == 1) {
-            return String.valueOf(function.apply(player, Collections.emptyList()));
-        }
-        return String.valueOf(function.apply(player, Arrays.asList(split).subList(1, split.length)));
+        return String.valueOf(function.apply(player, Arrays.asList(split)));
     }
 }

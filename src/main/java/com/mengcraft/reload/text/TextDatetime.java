@@ -3,7 +3,6 @@ package com.mengcraft.reload.text;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.mengcraft.reload.Utils;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
@@ -28,14 +27,14 @@ public class TextDatetime extends TextAbstract {
 
     public String until(Player who, List<String> cmd) {
         // %datetime_until_2099-01-01T00:00% => 16384
-        if (cmd.isEmpty()) {
+        if (cmd.size() == 1) {
             return "0";
         }
-        LocalDateTime time = LocalDateTime.parse(cmd.get(0));
+        LocalDateTime time = LocalDateTime.parse(cmd.get(1));
         LocalDateTime now = LocalDateTime.now();
         ChronoUnit unit = ChronoUnit.SECONDS;
-        if (cmd.size() > 1) {
-            unit = ChronoUnit.valueOf(cmd.get(1).toUpperCase());
+        if (cmd.size() > 2) {
+            unit = ChronoUnit.valueOf(cmd.get(2).toUpperCase());
         }
         if (time.isAfter(now)) {
             return String.valueOf(now.until(time, unit));
@@ -46,9 +45,9 @@ public class TextDatetime extends TextAbstract {
     public String now(Player who, List<String> cmd) {
         // %datetime_now% => 2023-01-01T00:00
         // %datetime_now_yyyyMMdd% => 20230101
-        if (cmd.isEmpty()) {
+        if (cmd.size() == 1) {
             return LocalDateTime.now().toString();
         }
-        return LocalDateTime.now().format(formatters.getUnchecked(cmd.get(0)));
+        return LocalDateTime.now().format(formatters.getUnchecked(cmd.get(1)));
     }
 }
