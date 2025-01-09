@@ -35,7 +35,7 @@ public class If implements ICallable {
             } else if (code == ';') {
                 // End line
                 deque.add(text.toString().trim());
-                text = new StringBuilder();
+                text.setLength(0);
             } else {
                 text.append(code);
             }
