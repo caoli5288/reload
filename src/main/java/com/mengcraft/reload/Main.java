@@ -16,6 +16,7 @@ import com.mengcraft.reload.command.CommandCpus;
 import com.mengcraft.reload.command.CommandEcho;
 import com.mengcraft.reload.command.CommandExit;
 import com.mengcraft.reload.command.CommandLag;
+import com.mengcraft.reload.command.CommandMsg;
 import com.mengcraft.reload.command.CommandShutdown;
 import com.mengcraft.reload.command.CommandTrue;
 import com.mengcraft.reload.command.CommandUptime;
@@ -27,6 +28,7 @@ import com.mengcraft.reload.command.control.CommandIf;
 import com.mengcraft.reload.command.curl.CommandCurl;
 import com.mengcraft.reload.text.TextDatetime;
 import com.mengcraft.reload.text.TextNextInt;
+import com.mengcraft.reload.text.TextNextText;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -188,6 +190,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "velocity", "velocity.use", new CommandVelocity());
         PluginHelper.addExecutor(this, "alias", "alias.use", new CommandAlias());
         PluginHelper.addExecutor(this, "lag", "lag.use", new CommandLag());
+        PluginHelper.addExecutor(this, "msg", "msg.use", new CommandMsg());
         // Cpus command
         PluginHelper.addExecutor(this, "cpus", "cpus.use", new CommandCpus());
         PluginHelper.addExecutor(this, "if", "if.use", new CommandIf());
@@ -203,6 +206,7 @@ public class Main extends JavaPlugin {
             papi = true;
             new TextDatetime(this).register();
             new TextNextInt(this).register();
+            new TextNextText(this).register();
         }
         if (pm.getPlugin("Citizens") != null) {
             CitizensManager.addTrait(TraitInfo.create(TimelinesTrait.class));

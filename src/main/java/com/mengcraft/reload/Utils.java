@@ -1,6 +1,7 @@
 package com.mengcraft.reload;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -13,8 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Utils {
 
@@ -92,5 +95,42 @@ public class Utils {
 
     public static void ensureLinux() {
         Preconditions.checkState(System.getProperty("os.name").toLowerCase().contains("linux"), "Only support Linux");
+    }
+
+    public static void split(String text, Consumer<String> callback) {
+        boolean esp = false;
+        StringBuilder line = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            if (esp) {
+                char code = text.charAt(i);
+                if (code == 'n') {
+                    callback.accept(line.toString());
+                    // Reset
+                    line.setLength(0);
+                    esp = false;
+                } else {
+                    line.append(code);
+                }
+            } else {
+                if (text.charAt(i) == '\\') {
+                    esp = true;
+                } else {
+                    line.append(text.charAt(i));
+                }
+            }
+        }
+        if (esp) {
+            // Handle the end backslash
+            line.append('\\');
+        }
+        if (line.length() != 0) {
+            callback.accept(line.toString());
+        }
+    }
+
+    public static List<String> split(String text) {
+        ArrayList<String> lines = Lists.newArrayList();
+        split(text, lines::add);
+        return lines;
     }
 }
