@@ -28,6 +28,14 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
   - Call commands asynchronous.
 - /echo <player_name> \[msg...]
   - Format messages for given player. 
+- /exit
+  - Shutdown server if no players online.
+- /lag [time]
+  - Start or stop server lag simulation.
+  - Optional parameter to set lag time in milliseconds per tick.
+- /msg <player_name> <message...>
+  - Send formatted message to specified player.
+  - Support color codes with &.
 - /curl \<url> \[data]
 - /alias \<command>
   - Detect if the command is an alias
@@ -40,6 +48,7 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /cmd <player_name> <command...>
   - Execute commands for given player.
   - Use `@r` to select random one.
+  - Use `@<int>` to select random players. 
   - placeholders will be replaced.
 - /if \<...>
   - See below.
@@ -194,6 +203,10 @@ traffic_rules:
 - `%datetime_now%`
 - `%datetime_now_yyyyMMddHHmmss%`
 - `%datetime_until_2023-01-01T00:00%`
+- `%nextint_100%` - Returns a random integer between 0 and 100
+- `%nextint_1_100%` - Returns a random integer between 1 and 100
+- `%nexttext_a_b_c%` - Returns a random text from the given list
+- `%nexttext_@file.txt%` - Returns a random line from the specified file
 
 ## If command examples
 
