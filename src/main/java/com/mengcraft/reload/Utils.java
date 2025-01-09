@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 
 public class Utils {
@@ -35,7 +36,7 @@ public class Utils {
         return s == null || s.isEmpty();
     }
 
-    public static boolean isNullOrEmpty(List<?> l) {
+    public static boolean isNullOrEmpty(Collection<?> l) {
         return l == null || l.isEmpty();
     }
 

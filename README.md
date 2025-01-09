@@ -38,7 +38,9 @@ A Bukkit plugin that customize server's restart behavior. Public under GPLv2.
 - /cmdall \<command...>
   - Execute commands for all players. Each player's placeholders will be replaced.
 - /cmd <player_name> <command...>
-  - Execute commands for given player and placeholders will be replaced.
+  - Execute commands for given player.
+  - Use `@r` to select random one.
+  - placeholders will be replaced.
 - /if \<...>
   - See below.
 
