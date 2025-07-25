@@ -198,7 +198,7 @@ public class Main extends JavaPlugin {
         PluginHelper.addExecutor(this, "cmd", "cmd.use", new CommandCmd());
         PluginHelper.addExecutor(this, "chunk", "chunk.use", new CommandChunk());
 
-        config.getStringList("schedule").forEach(this::runCommand);
+        Bukkit.getScheduler().runTask(this, () -> getConfig().getStringList("schedule").forEach(this::runCommand));
 
         // variables
         PluginManager pm = Bukkit.getPluginManager();
