@@ -20,15 +20,23 @@ public class CommandUptime extends PlaceholderExpansion implements PluginHelper.
     private static final long DAY = 86400;
 
     private final LocalDateTime time = LocalDateTime.now();
+    private static CommandUptime of;
 
-    public CommandUptime() {
+    public static CommandUptime of() {
+        if (of == null) {
+            of = new CommandUptime();
+        }
+        return of;
+    }
+
+    private CommandUptime() {
         register();
     }
 
     @Override
     public void exec(CommandSender sender, List<String> list) {
         Ticker ticker = Main.getTicker();
-        sender.sendMessage(time.toLocalDate() + " up " + time() + ", " + ticker.tick() + " tick(s); " +
+        sender.sendMessage(time.toLocalDate() + " up " + uptime() + ", " + ticker.tick() + " tick(s); " +
                 "Load avg: " + colour(ticker.getShort()) + ", " + colour(ticker.getMedium()) +
                 ", " + colour(ticker.getLong()));
     }
@@ -87,7 +95,7 @@ public class CommandUptime extends PlaceholderExpansion implements PluginHelper.
         return "§" + l + i + "§r";
     }
 
-    private String time() {
+    public String uptime() {
         long l = ChronoUnit.SECONDS.between(time, LocalDateTime.now());
         return toTimeString(l);
     }

@@ -12,7 +12,7 @@ schedule:
 message:
   notify: "&1为了服务器流畅，本大厅即将重启！请玩家前往其他大厅或等待自动传送至主大厅！"
 valid_sqlite: false
-valid_server_alive: true
+valid_server_alive: false
 extension:
   auto_dump: false
 bootstrap_watchdog: 600
@@ -35,3 +35,8 @@ chunks_keeper:
   enable: false
   limit: 1000
   log: false
+healthz:
+  enable: false
+  port: 3000
+  timeout: 10
+  retries: 3

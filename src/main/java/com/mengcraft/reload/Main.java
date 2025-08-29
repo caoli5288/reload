@@ -56,7 +56,9 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -77,7 +79,8 @@ public class Main extends JavaPlugin {
     boolean shutdown;
     private List<String> kick;
     private Future<?> bootstrapWatchdog;
-    private boolean serverValid;
+//    private boolean serverValid;
+    private static AliveValidator aliveValidator;
     private static boolean papi;
     @Getter
     private static boolean spigot;
@@ -153,25 +156,17 @@ public class Main extends JavaPlugin {
             getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         }
 
-        serverValid = config.getBoolean("valid_server_alive", true);
+        aliveValidator = new AliveValidator();
+        aliveValidator.load(config);
         async.scheduleAtFixedRate(() -> {
             ticker.update();
-            if (serverValid && ticker.getShort() < 1) {
-                // Run only once
-                serverValid = false;
-                getLogger().log(Level.SEVERE, "TPS < 1, preparing kill server");
-                if (config.getBoolean("extension.auto_dump")) {
-                    dump(false);
-                }
-                getLogger().log(Level.SEVERE, "Kill server");
-                shutdown(true);
-            }
+            aliveValidator.tick(this, ticker);
         }, 15, 15, TimeUnit.SECONDS);
 
         getServer().getScheduler().runTaskTimer(this, ticker, config.getInt("wait") * 20L, 20);
 
         PluginHelper.addExecutor(this, "true", "true.use", new CommandTrue());
-        PluginHelper.addExecutor(this, "uptime", "uptime.use", new CommandUptime());
+        PluginHelper.addExecutor(this, "uptime", "uptime.use", CommandUptime.of());
         PluginHelper.addExecutor(this, "at", "at.use", new CommandAt());
         PluginHelper.addExecutor(this, "atq", "atq.use", new CommandAtq());
         PluginHelper.addExecutor(this, "every", "every.use", new CommandEvery());
@@ -299,6 +294,10 @@ public class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         if (!(async == null)) async.shutdown();
+        Optional.ofNullable(async)
+                .ifPresent(ExecutorService::shutdown);
+        Optional.ofNullable(aliveValidator)
+                .ifPresent(AliveValidator::disable);
     }
 
     public void shutdown() {
