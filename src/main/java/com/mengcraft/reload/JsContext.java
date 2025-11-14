@@ -3,7 +3,9 @@ package com.mengcraft.reload;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.mengcraft.reload.util.Artifact;
+import lombok.SneakyThrows;
 
+import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -19,7 +21,7 @@ public class JsContext {
         if (jse == null) {
             // Classpath has no js engine
             try {
-                Artifact.load(JsContext.class.getClassLoader(), Lists.newArrayList("org.openjdk.nashorn:nashorn-core:15.4",
+                Artifact.load(JsContext.class.getClassLoader(), Lists.newArrayList("org.openjdk.nashorn:nashorn-core:15.7",
                         "org.ow2.asm:asm:7.3.1",
                         "org.ow2.asm:asm-commons:7.3.1",
                         "org.ow2.asm:asm-tree:7.3.1",
@@ -38,6 +40,11 @@ public class JsContext {
         }
     }
 
+    @SneakyThrows
+    public Object eval(Bindings bindings, String js) {
+        return jse.eval(js, bindings);
+    }
+
     public Object eval(String js) {
         try {
             return jse.eval(js);
@@ -49,5 +56,9 @@ public class JsContext {
 
     public static JsContext getInstance() {
         return INSTANCE;
+    }
+
+    public Bindings createBindings() {
+        return jse.createBindings();
     }
 }

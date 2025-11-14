@@ -6,3 +6,6 @@ softdepend:
   - Citizens
   - PlaceholderAPI
   - ChestCommands
+
+libraries:
+  - org.openjdk.nashorn:nashorn-core:15.7

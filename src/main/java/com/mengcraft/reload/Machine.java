@@ -9,8 +9,7 @@ import lombok.SneakyThrows;
 import lombok.val;
 import org.bukkit.Bukkit;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
+import javax.script.Bindings;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -44,7 +43,7 @@ public class Machine {
 
     }
 
-    final ScriptEngine engine;
+    Bindings bindings;
     final String expr;
     final List<Token> list;
     final long now = System.currentTimeMillis();
@@ -68,7 +67,11 @@ public class Machine {
 
     @SneakyThrows
     public boolean process() {
-        return (boolean) engine.eval(expr());
+        JsContext context = JsContext.getInstance();
+        if (bindings == null) {
+            bindings = context.createBindings();
+        }
+        return (boolean) context.eval(bindings, expr());
     }
 
     private String expr() {
@@ -92,7 +95,7 @@ public class Machine {
         for (Token token : Token.values()) {
             if (expr.contains(token.key)) b.add(token);
         }
-        return new Machine(new ScriptEngineManager().getEngineByExtension("js"), expr, b.build());
+        return new Machine(expr, b.build());
     }
 
 }
