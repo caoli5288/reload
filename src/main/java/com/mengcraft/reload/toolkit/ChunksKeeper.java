@@ -1,4 +1,4 @@
-package com.mengcraft.reload;
+package com.mengcraft.reload.toolkit;
 
 import com.google.common.base.Preconditions;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,7 @@ public class ChunksKeeper implements Listener {
         Preconditions.checkState(instance == null);
         if (config.getBoolean("chunks_keeper.enable", false)) {
             Bukkit.getPluginManager().registerEvents(instance = new ChunksKeeper(config.getInt("chunks_keeper.limit", 1000), config.getBoolean("chunks_keeper.log", false)), plugin);
+            Bukkit.getLogger().info("[ChunksKeeper] Enabled");
         }
     }
 

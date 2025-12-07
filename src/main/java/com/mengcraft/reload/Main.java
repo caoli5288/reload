@@ -26,9 +26,14 @@ import com.mengcraft.reload.command.at.CommandAtq;
 import com.mengcraft.reload.command.at.CommandEvery;
 import com.mengcraft.reload.command.control.CommandIf;
 import com.mengcraft.reload.command.curl.CommandCurl;
+import com.mengcraft.reload.toolkit.AliveValidator;
+import com.mengcraft.reload.toolkit.ChunksKeeper;
 import com.mengcraft.reload.text.TextDatetime;
 import com.mengcraft.reload.text.TextNextInt;
 import com.mengcraft.reload.text.TextNextText;
+import com.mengcraft.reload.toolkit.CommandsAltChecker;
+import com.mengcraft.reload.toolkit.DataFixersCleaner;
+import com.mengcraft.reload.toolkit.MetadataCleaner;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -212,6 +217,7 @@ public class Main extends JavaPlugin {
         ChunksKeeper.load(this, config);
         CommandsAltChecker.load(this, config);
         MetadataCleaner.load(this, config);
+        DataFixersCleaner.load(this, config);
     }
 
     public void safeShutdown() {

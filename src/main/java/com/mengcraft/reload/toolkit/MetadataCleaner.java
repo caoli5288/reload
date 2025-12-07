@@ -1,4 +1,4 @@
-package com.mengcraft.reload;
+package com.mengcraft.reload.toolkit;
 
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
@@ -43,6 +43,7 @@ public class MetadataCleaner implements Listener {
         Preconditions.checkState(instance == null);
         if (config.getBoolean("metadata_cleaner.enable", false)) {
             Bukkit.getPluginManager().registerEvents(instance = new MetadataCleaner(config.getBoolean("metadata_cleaner.log", false)), plugin);
+            Bukkit.getLogger().info("[MetadataCleaner] Enabled");
         }
     }
 

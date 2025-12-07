@@ -1,7 +1,9 @@
-package com.mengcraft.reload;
+package com.mengcraft.reload.toolkit;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.mengcraft.reload.Main;
+import com.mengcraft.reload.Utils;
 import lombok.Data;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -39,6 +41,7 @@ public class CommandsAltChecker implements Listener {
         List<?> list = config.getList("commands_alt_checker");
         if (!list.isEmpty()) {
             Bukkit.getPluginManager().registerEvents(instance = new CommandsAltChecker(list), plugin);
+            Bukkit.getLogger().info("[CommandsAltChecker] Enabled");
         }
     }
 
