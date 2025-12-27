@@ -17,6 +17,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class CommandsAltChecker implements Listener {
 
@@ -27,11 +28,14 @@ public class CommandsAltChecker implements Listener {
         for (Object alt : alts) {
             if (alt instanceof String) {
                 String altName = alt.toString();
-                commands.put(altName, new AltCheckInfo(altName, null));
+                commands.put(altName, new AltCheckInfo(altName, null, "command." + altName + ".use"));
             } else if (alt instanceof Map) {
                 Map<String, String> map = (Map<String, String>) alt;
-                AltCheckInfo info = new AltCheckInfo(map.get("name"), map.get("message"));
-                commands.put(info.getName(), info);
+                Optional.ofNullable(map.get("name"))
+                        .map(altName -> new AltCheckInfo(altName,
+                                map.get("message"),
+                                map.getOrDefault("permission", "command." + altName + ".use")))
+                        .ifPresent(l -> commands.put(l.getName(), l));
             }
         }
     }
@@ -58,14 +62,14 @@ public class CommandsAltChecker implements Listener {
             return;
         }
         cmdName = command.getName();
-        if (commands.containsKey(cmdName) && !p.hasPermission("command." + cmdName + ".use")) {
-            event.setCancelled(true);
-            // check message
-            AltCheckInfo info = commands.get(cmdName);
-            if (!Utils.isNullOrEmpty(info.getMessage())) {
-                p.sendMessage(Main.format(p, info.getMessage()));
-            }
-        }
+        Optional.ofNullable(commands.get(cmdName))
+                .filter(l -> !p.hasPermission(l.getPermission()))
+                .ifPresent(l -> {
+                    event.setCancelled(true);
+                    if (!Utils.isNullOrEmpty(l.getMessage())) {
+                        p.sendMessage(Main.format(p, l.getMessage()));
+                    }
+                });
     }
 
     @Data
@@ -73,5 +77,6 @@ public class CommandsAltChecker implements Listener {
 
         private final String name;
         private final String message;
+        private final String permission;
     }
 }
