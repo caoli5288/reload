@@ -23,6 +23,18 @@ public class TextDatetime extends TextAbstract {
         super(owner, "datetime");
         addSubcommand("now", this::now);
         addSubcommand("until", this::until);
+        addSubcommand("between", this::between);
+    }
+
+    public String between(Player who, List<String> cmd) {
+        // %datetime_between_2099-01-01T00:00_2099-12-31T23:59% => true
+        if (cmd.size() < 3) {
+            return "false";
+        }
+        LocalDateTime begin = LocalDateTime.parse(cmd.get(1));
+        LocalDateTime end = LocalDateTime.parse(cmd.get(2));
+        LocalDateTime now = LocalDateTime.now();
+        return String.valueOf((now.isEqual(begin) || now.isAfter(begin)) && now.isBefore(end));
     }
 
     public String until(Player who, List<String> cmd) {
